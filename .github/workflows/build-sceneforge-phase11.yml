@@ -1,0 +1,105 @@
+name: Build SceneForge Animate Phase 1.1
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase11.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+
+      - name: Build Phase 1.1 page from stable Phase 1
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          src = Path('sceneforge-animate/fixed.html').read_text(encoding='utf-8')
+          s = src
+          s = s.replace('<title>SceneForge Animate Phase 1</title>', '<title>SceneForge Animate Phase 1.1</title>')
+          s = s.replace('<div class="brand">SceneForge Animate</div><div class="sub">Phase 1 · DeepSeek Agent → JSON → Three.js</div>', '<div class="brand">SceneForge Animate</div><div class="sub">Phase 1.1 · Director Plan → Shot Compiler → Three.js</div>')
+          s = s.replace('做一个12秒搞笑动画：两个机器人走到舞台中央，一个挥手，另一个突然跳舞，最后两个人一起跑开。镜头最后拉远。', '做一个14秒搞笑动画：两个机器人在舞台上碰面。蓝色机器人先挥手，紫色机器人停顿一下后突然跳舞，蓝色机器人愣住，最后两个人一起跑出舞台。镜头要让故事很容易看懂。')
+          s = s.replace('资产上限由前端强制裁剪。地面、灯光、镜头不计入。', 'Phase 1.1：资产上限仍由前端强制裁剪；AI 输出语义镜头和动作节拍，浏览器负责编译坐标与连续状态。')
+          s = s.replace('本地 Demo', '清晰 Demo')
+          s = s.replace('<button id="orbit">自由镜头</button><span id="time">', '<button id="orbit">自由镜头</button><button id="captions">隐藏字幕</button><span id="time">')
+          s = s.replace('<div id="status" class="status">正在加载本地资产…</div>', '<div id="captionWrap" class="captionWrap"><div id="shotBadge" class="shotBadge">Shot</div><div id="caption" class="caption">故事字幕</div></div><div id="status" class="status">正在加载本地资产…</div>')
+          s = s.replace('</style>', '.captionWrap{position:absolute;z-index:6;left:50%;bottom:44px;transform:translateX(-50%);width:min(760px,82%);text-align:center;pointer-events:none}.shotBadge{display:inline-block;font-size:10px;padding:4px 8px;border-radius:999px;background:#111927e8;border:1px solid #41516e;color:#a9bce2;margin-bottom:7px}.caption{font-weight:750;font-size:20px;line-height:1.25;text-shadow:0 2px 8px #000,0 0 20px #000;padding:6px 12px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;border:1px solid #fff5}</style>')
+
+          s = s.replace("orbit:$('orbit'),time:$('time')", "orbit:$('orbit'),captions:$('captions'),captionWrap:$('captionWrap'),shotBadge:$('shotBadge'),caption:$('caption'),time:$('time')")
+          s = s.replace("const CATALOG={robot:{file:'./assets/RobotExpressive.glb',clips:['Idle','Walking','Running','Dance','Wave','Jump','Yes','No','Punch','ThumbsUp','Standing','Sitting']},fox:{file:'./assets/Fox.glb',clips:['Survey','Walk','Run']}};", "const CATALOG={robot:{file:'./assets/RobotExpressive.glb',clips:['Idle','Walking','Running','Dance','Wave','Jump','Yes','No','Punch','ThumbsUp','Standing','Sitting']},fox:{file:'./assets/Fox.glb',clips:['Survey','Walk','Run']}};\nconst PALETTE=['#4da3ff','#c879ff','#ff9c5a','#5fe0a1','#ffd65c','#ff6f91','#7ce1ff','#b8ff6a'];\nconst CAMERA_PRESETS={wide:[0,5.4,12.5],medium:[0,3.2,7.2],close:[0,2.25,4.5],reaction:[2.7,2.5,5.1],follow:[4.2,3.4,7.2]};")
+          s = s.replace("let templates={},actors=new Map(),storyboard=null,project=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true;", "let templates={},actors=new Map(),storyboard=null,project=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true,captionsVisible=true,timelineActions=[];")
+
+          old_actor = re.search(r"function actor\(spec\)\{.*?\}\nfunction setClip", s, re.S)
+          if not old_actor: raise SystemExit('actor block not found')
+          new_actor = r'''function makeLabel(text,color){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.font='700 46px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillStyle='rgba(5,8,14,.72)';x.fillRect(8,14,496,100);x.strokeStyle=color;x.lineWidth=6;x.strokeRect(8,14,496,100);x.fillStyle='#fff';x.fillText(text,256,65);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(2.7,.68,1);sp.position.set(0,3.25,0);return sp}
+function actor(spec){const tpl=templates[spec.type]||fallback(spec.type),model=SkeletonUtils.clone(tpl.scene),tint=new THREE.Color(spec.color||'#4da3ff');model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;if(n.material){n.material=n.material.clone();if(n.material.color)n.material.color.lerp(tint,.34);if(n.material.emissive){n.material.emissive=tint.clone().multiplyScalar(.12);n.material.emissiveIntensity=.6}}}});const wrap=new THREE.Group();wrap.add(model);const b=new THREE.Box3().setFromObject(model),sz=b.getSize(new THREE.Vector3());model.scale.setScalar((spec.type==='fox'?1.5:2.6)/Math.max(.001,sz.y));const b2=new THREE.Box3().setFromObject(model),c=b2.getCenter(new THREE.Vector3());model.position.set(-c.x,-b2.min.y,-c.z);const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.9,40),new THREE.MeshBasicMaterial({color:tint,side:THREE.DoubleSide,transparent:true,opacity:.9}));ring.rotation.x=-Math.PI/2;ring.position.y=.025;wrap.add(ring);wrap.add(makeLabel(spec.label,tint.getStyle()));world.add(wrap);const mixer=new THREE.AnimationMixer(model),actions={};for(const cl of tpl.animations||[])actions[cl.name]=mixer.clipAction(cl);const a={spec,wrap,mixer,actions,current:null};actors.set(spec.id,a);return a}
+function setClip'''
+          s = s[:old_actor.start()] + new_actor + s[old_actor.end():]
+
+          old_sanitize = re.search(r"function sanitize\(raw\)\{.*?\}\nfunction render\(\)", s, re.S)
+          if not old_sanitize: raise SystemExit('sanitize block not found')
+          new_sanitize = r'''function actionClip(type,action){if(type==='fox')return action==='run'?'Run':action==='walk'?'Walk':'Survey';const m={walk:'Walking',run:'Running',wave:'Wave',dance:'Dance',react:'No',jump:'Jump',idle:'Idle',pause:'Idle'};return m[action]||'Idle'}
+function sanitize(raw){const limit=Number(ui.limit.value),duration=clamp(raw?.duration,6,40,14),assets=[];for(const [i,a] of (Array.isArray(raw?.assets)?raw.assets:[]).slice(0,limit).entries()){const type=['robot','fox'].includes(a.type)?a.type:'robot';assets.push({id:String(a.id||`a${i+1}`).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,30),label:String(a.label||`角色${i+1}`).slice(0,30),type,color:String(a.color||PALETTE[i%PALETTE.length]),position:[clamp(a.position?.[0],-8,8,i*3-2),0,clamp(a.position?.[2],-4,4,0)],rotationY:clamp(a.rotationY,-6.3,6.3,0),scale:1})}if(!assets.length)assets.push({id:'robot1',label:'蓝色机器人',type:'robot',color:'#4da3ff',position:[-2,0,0],rotationY:0,scale:1});const ids=new Set(assets.map(a=>a.id));const shots=[];for(const [i,sh] of (Array.isArray(raw?.shots)?raw.shots:[]).slice(0,8).entries()){const start=clamp(sh.start,0,duration,0),end=clamp(sh.end,start+.2,duration,duration);const focus=Array.isArray(sh.focus)?sh.focus.filter(x=>ids.has(x)):[];const beats=(Array.isArray(sh.beats)?sh.beats:[]).slice(0,20).filter(b=>ids.has(b.target)).map(b=>({target:b.target,action:['walk','run','wave','dance','react','jump','idle','pause','face'].includes(b.action)?b.action:'idle',start:clamp(b.start,start,end,start),end:clamp(b.end,start,end,end),to:Array.isArray(b.to)&&b.to.length===3?[clamp(b.to[0],-10,10,0),0,clamp(b.to[2],-5,5,0)]:null,rotationY:Number.isFinite(Number(b.rotationY))?clamp(b.rotationY,-6.3,6.3,0):null}));shots.push({id:String(sh.id||`s${i+1}`),title:String(sh.title||`Shot ${i+1}`),caption:String(sh.caption||sh.title||''),start,end,cameraPreset:['wide','medium','close','reaction','follow'].includes(sh.cameraPreset)?sh.cameraPreset:'medium',focus,beats})}if(!shots.length)shots.push({id:'s1',title:'Main',caption:'故事开始',start:0,end:duration,cameraPreset:'wide',focus:assets.map(a=>a.id),beats:[]});return {title:String(raw?.title||'Animation'),summary:String(raw?.summary||''),duration,assets,shots}}
+function render()'''
+          s = s[:old_sanitize.start()] + new_sanitize + s[old_sanitize.end():]
+
+          old_render = re.search(r"function render\(\)\{.*?\}\nfunction shotAt", s, re.S)
+          if not old_render: raise SystemExit('render block not found')
+          new_render = r'''function compileTimeline(){timelineActions=[];const state=new Map(project.assets.map(a=>[a.id,{pos:[...a.position],rot:a.rotationY}]));const beats=project.shots.flatMap(sh=>sh.beats).sort((a,b)=>a.start-b.start);for(const b of beats){const spec=project.assets.find(x=>x.id===b.target),st=state.get(b.target);if(!spec||!st)continue;if(b.action==='walk'||b.action==='run'){const to=b.to||[st.pos[0]+(b.action==='run'?4:2),0,st.pos[2]];timelineActions.push({target:b.target,type:'move',start:b.start,end:b.end,from:[...st.pos],to:[...to],clip:actionClip(spec.type,b.action)});st.pos=[...to]}else if(b.action==='face'&&b.rotationY!==null){timelineActions.push({target:b.target,type:'rotate',start:b.start,end:b.end,from:st.rot,to:b.rotationY});st.rot=b.rotationY}else{timelineActions.push({target:b.target,type:'clip',start:b.start,end:b.end,clip:actionClip(spec.type,b.action)})}}}
+function render(){if(!project)return;compileTimeline();clearWorld();project.assets.forEach(actor);ui.json.textContent=JSON.stringify(project,null,2);ui.story.innerHTML=`<b>${project.title}</b><br><br>${project.summary}<br><br>${project.shots.map((sh,i)=>`<b>${i+1}. ${sh.title}</b> · ${sh.start.toFixed(1)}–${sh.end.toFixed(1)}s · ${sh.cameraPreset}<br>${sh.caption}`).join('<br><br>')}`;ui.assets.innerHTML=project.assets.map(a=>`<div class="asset"><span class="dot" style="background:${a.color}"></span><b>${a.label}</b><br>${a.type} · 初始位置 [${a.position.join(', ')}]</div>`).join('');ui.seek.max=project.duration;ui.shots.innerHTML='';for(const sh of project.shots){const d=document.createElement('div');d.className='shot';d.style.left=`${100*sh.start/project.duration}%`;d.style.width=`${Math.max(3,100*(sh.end-sh.start)/project.duration)}%`;d.innerHTML=`<b>${sh.title}</b>${sh.cameraPreset}<br>${sh.caption}`;ui.shots.appendChild(d)}current=0;playing=false;apply(0);setStatus(`Phase 1.1：${project.assets.length} 个角色，${project.shots.length} 个清晰镜头`,'good')}
+function shotAt'''
+          s = s[:old_render.start()] + new_render + s[old_render.end():]
+
+          old_apply = re.search(r"function shotAt\(t\).*?\nconst SYSTEM=", s, re.S)
+          if not old_apply: raise SystemExit('apply block not found')
+          new_apply = r'''function shotAt(t){return project?.shots.find(sh=>t>=sh.start&&t<sh.end)||project?.shots.at(-1)}
+function stateAt(id,t){const spec=project.assets.find(a=>a.id===id);let pos=[...spec.position],rot=spec.rotationY,clip=actionClip(spec.type,'idle'),clipStart=0;for(const ac of timelineActions){if(ac.target!==id||t<ac.start)continue;if(ac.type==='move'){if(t>=ac.end)pos=[...ac.to];else pos=lerp3(ac.from,ac.to,smooth((t-ac.start)/Math.max(.001,ac.end-ac.start)));clip=ac.clip;clipStart=ac.start}else if(ac.type==='rotate'){rot=t>=ac.end?ac.to:THREE.MathUtils.lerp(ac.from,ac.to,smooth((t-ac.start)/Math.max(.001,ac.end-ac.start)))}else if(ac.type==='clip'){if(t<=ac.end){clip=ac.clip;clipStart=ac.start}}}return {pos,rot,clip,clipTime:Math.max(0,t-clipStart)}}
+function focusPoint(sh,t){const ids=sh.focus.length?sh.focus:project.assets.map(a=>a.id),pts=ids.map(id=>stateAt(id,t).pos);if(!pts.length)return [0,1.4,0];return [pts.reduce((q,p)=>q+p[0],0)/pts.length,1.45,pts.reduce((q,p)=>q+p[2],0)/pts.length]}
+function cameraFor(sh,t){const target=focusPoint(sh,t),off=CAMERA_PRESETS[sh.cameraPreset]||CAMERA_PRESETS.medium;if(sh.cameraPreset==='follow'&&sh.focus[0]){const p=stateAt(sh.focus[0],t).pos;return {pos:[p[0]+off[0],off[1],p[2]+off[2]],target:[p[0],1.45,p[2]]}}const side=sh.cameraPreset==='reaction'?(target[0]<0?2.7:-2.7):off[0];return {pos:[target[0]+side,off[1],target[2]+off[2]],target}}
+function apply(t){if(!project)return;for(const spec of project.assets){const a=actors.get(spec.id);if(!a)continue;const st=stateAt(spec.id,t);a.wrap.position.fromArray(st.pos);a.wrap.rotation.y=st.rot;setClip(a,st.clip,st.clipTime)}const sh=shotAt(t);if(sh){if(cameraDriven){const c=cameraFor(sh,t);camera.position.fromArray(c.pos);camera.lookAt(...c.target)}ui.shotBadge.textContent=`${sh.title} · ${sh.cameraPreset}`;ui.caption.textContent=sh.caption}ui.time.textContent=`${t.toFixed(1)} / ${project.duration.toFixed(1)}s`;ui.seek.value=t}
+const SYSTEM='''
+          s = s[:old_apply.start()] + new_apply + s[old_apply.end():]
+
+          s = re.sub(r"const SYSTEM=`.*?`;", "const SYSTEM=`You are SceneForge Animate Director for Phase 1.1. Return JSON only, no markdown. Do NOT output raw camera coordinates. Create a visually readable director plan. Browser assets: robot and fox only. Robot actions: walk, run, wave, dance, react, jump, idle, pause, face. Fox: walk, run, idle, pause, face. Camera presets: wide, medium, close, reaction, follow. Use 3-5 shots. Every shot needs caption, cameraPreset, focus actor ids and beats. Use pauses before surprising actions. Use close/reaction for key moments and wide/follow for entrances/exits. Positions carry over automatically across shots. For walk/run provide to:[x,0,z]. Never exceed maxAssets. Output: {title,summary,duration,assets:[{id,label,type,color,position:[x,0,z],rotationY}],shots:[{id,title,caption,start,end,cameraPreset,focus:[ids],beats:[{target,action,start,end,to?,rotationY?}]}]}.`;", s, flags=re.S)
+
+          demo_start = s.find('const DEMO=')
+          demo_end = s.find('\nui.generate.onclick', demo_start)
+          if demo_start < 0 or demo_end < 0: raise SystemExit('demo block not found')
+          demo = r'''const DEMO={title:'机器人舞台偶遇',summary:'四个镜头清楚表现：碰面、挥手、突然跳舞、一起逃跑。动作之间刻意留停顿。',duration:14,assets:[{id:'blue',label:'蓝色机器人',type:'robot',color:'#4da3ff',position:[-4.2,0,0],rotationY:1.57},{id:'purple',label:'紫色机器人',type:'robot',color:'#c879ff',position:[4.2,0,0],rotationY:-1.57}],shots:[{id:'s1',title:'碰面',caption:'两位机器人从舞台两侧走到中央',start:0,end:4,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'walk',start:.4,end:3.2,to:[-1.3,0,0]},{target:'purple',action:'walk',start:.4,end:3.2,to:[1.3,0,0]},{target:'blue',action:'pause',start:3.2,end:4},{target:'purple',action:'pause',start:3.2,end:4}]},{id:'s2',title:'打招呼',caption:'蓝色机器人停一下，然后挥手打招呼',start:4,end:7,cameraPreset:'close',focus:['blue'],beats:[{target:'blue',action:'pause',start:4,end:4.6},{target:'blue',action:'wave',start:4.6,end:6.5},{target:'purple',action:'idle',start:4,end:7}]},{id:'s3',title:'突然跳舞',caption:'紫色机器人突然跳舞，蓝色机器人明显愣住了',start:7,end:10.2,cameraPreset:'reaction',focus:['purple','blue'],beats:[{target:'purple',action:'pause',start:7,end:7.45},{target:'purple',action:'dance',start:7.45,end:10.2},{target:'blue',action:'react',start:8.1,end:9.6}]},{id:'s4',title:'一起逃跑',caption:'两个人突然一起向右跑出舞台，镜头拉远',start:10.2,end:14,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'run',start:10.45,end:13.6,to:[8.5,0,0]},{target:'purple',action:'run',start:10.45,end:13.6,to:[10.3,0,0]}]}]};'''
+          s = s[:demo_start] + demo + s[demo_end:]
+
+          s = s.replace("ui.orbit.onclick=()=>{cameraDriven=!cameraDriven;controls.enabled=!cameraDriven;ui.orbit.textContent=cameraDriven?'自由镜头':'跟随镜头'};", "ui.orbit.onclick=()=>{cameraDriven=!cameraDriven;controls.enabled=!cameraDriven;ui.orbit.textContent=cameraDriven?'自由镜头':'跟随镜头'};ui.captions.onclick=()=>{captionsVisible=!captionsVisible;ui.captionWrap.style.display=captionsVisible?'block':'none';ui.captions.textContent=captionsVisible?'隐藏字幕':'显示字幕'};")
+          s = s.replace("project=sanitize(DEMO);storyboard={title:project.title", "project=sanitize(DEMO);storyboard={title:project.title")
+          s = s.replace("'Phase 1 就绪：本地 GLB + Agent Timeline'", "'Phase 1.1 就绪：角色区分 + 连续状态 + 镜头预设 + 节拍 + Debug 字幕'")
+
+          Path('sceneforge-animate/phase11.html').write_text(s, encoding='utf-8')
+          PY
+
+      - name: Syntax-check generated JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase11.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase11.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase11.mjs
+
+      - name: Commit Phase 1.1
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase11.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add SceneForge Animate Phase 1.1 readable direction'
+          git push origin sceneforge-v3
