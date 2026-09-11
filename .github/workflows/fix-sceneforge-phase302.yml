@@ -1,0 +1,44 @@
+name: Fix SceneForge Phase 3.0.2
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/fix-sceneforge-phase302.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Apply Phase 3.0.2 patch
+        run: python sceneforge-animate/fix_phase302_qwen_proxy.py
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase3.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase3.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase3.mjs
+      - name: Sanity checks
+        run: |
+          grep -q "Phase 3.0.2" sceneforge-animate/phase3.html
+          grep -q "Qwen Proxy URL" sceneforge-animate/phase3.html
+          grep -q "verify-qwen" sceneforge-animate/phase3.html
+          grep -q "X-Qwen-Key" sceneforge-animate/phase3.html
+          grep -q "Browser → Qwen Proxy → DashScope" sceneforge-animate/phase3.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase3.html
+          git commit -m 'Fix Phase 3.0.2 Qwen CORS via proxy'
+          git push origin sceneforge-v3
