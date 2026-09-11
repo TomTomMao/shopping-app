@@ -1,0 +1,112 @@
+name: Build SceneForge Animate Phase 1.2
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase12.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+
+      - name: Build Phase 1.2 from Phase 1.1
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('sceneforge-animate/phase11.html')
+          p=Path('sceneforge-animate/phase12.html')
+          s=src.read_text(encoding='utf-8')
+
+          s=s.replace('SceneForge Animate · Phase 1.1','SceneForge Animate · Phase 1.2')
+          s=s.replace('<span class="pill">Phase 1.1</span>','<span class="pill">Phase 1.2</span>')
+          s=s.replace('Director Plan → Shot Compiler → Three.js Timeline','Director Agent → Keyframes → Vision Review → Repair JSON')
+          s=s.replace('Phase 1.1 仍只用仓库里的测试 GLB。DeepSeek 负责“导演计划”，前端负责编译镜头和动作，资产数量由前端硬限制。','Phase 1.2：先生成导演计划，再可截取关键帧交给 Vision Agent 复审并生成修复 JSON。视觉复审会额外调用一次 DeepSeek Vision API。')
+          s=s.replace('Phase 1.1：AI 输出语义镜头和 beat，浏览器把它们编译成稳定 timeline。','Phase 1.2：生成与视觉复审都流式显示 reasoning；关键帧复审会产出一份可应用的修复 JSON。')
+
+          extra_css='''\n.thinkingBox{height:155px;overflow:auto;background:#090e16;border:1px solid #30405a;border-radius:9px;padding:8px;font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8c6dc;white-space:pre-wrap}.thinkingHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.liveDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#75a1ff;margin-right:6px;box-shadow:0 0 10px #75a1ff}.keyframes{display:grid;grid-template-columns:1fr 1fr;gap:7px}.kf{border:1px solid #34435e;border-radius:9px;overflow:hidden;background:#0b1018}.kf img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}.kf div{font-size:9px;color:#aebbd0;padding:5px}.repairBox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;line-height:1.4;white-space:pre-wrap;word-break:break-word;max-height:190px;overflow:auto;background:#090e16;border:1px solid #30405a;border-radius:9px;padding:7px}.reviewText{font-size:10px;line-height:1.45;color:#bac6d8;margin-bottom:7px}.secondary{background:#16233a;border-color:#405a86}.apply{background:#173c2b;border-color:#397453}.checkline{display:flex;align-items:center;gap:7px;font-size:10px;color:#9eacc1;margin-top:8px}.checkline input{width:auto}\n'''
+          s=s.replace('</style>',extra_css+'</style>')
+
+          button_anchor='<div class="row" style="margin-top:7px"><button id="reset">重置上下文</button><button id="clearKey">清除 Key</button></div>'
+          button_new=button_anchor+'\n    <div class="row" style="margin-top:7px"><button id="review" class="secondary">👁 截帧自检</button><button id="applyRepair" class="apply" disabled>✓ 应用修复</button></div>\n    <label class="checkline"><input id="autoReview" type="checkbox"/> Agent 生成后自动做视觉自检（额外 API 调用）</label>'
+          if button_anchor not in s: raise SystemExit('button anchor not found')
+          s=s.replace(button_anchor,button_new)
+
+          log_anchor='<div class="card"><h3>Agent / 编译日志</h3><div id="logs" class="logbox"><div class="log">Phase 1.2：生成与视觉复审都流式显示 reasoning；关键帧复审会产出一份可应用的修复 JSON。</div></div></div>'
+          thinking_card='''<div class="card"><div class="thinkingHead"><h3 style="margin:0">实时思考流</h3><span id="thinkingState" class="hint">idle</span></div><div id="thinking" class="thinkingBox">等待 Agent…</div></div>'''
+          if log_anchor not in s: raise SystemExit('log anchor not found')
+          s=s.replace(log_anchor,log_anchor+'\n  '+thinking_card)
+
+          right_anchor='<div class="card"><h3>Director Plan JSON</h3><div id="json" class="json">{}</div></div>'
+          review_cards='''<div class="card"><h3>关键帧</h3><div id="keyframes" class="keyframes"><div class="hint">点击“截帧自检”后显示。</div></div></div>\n  <div class="card"><h3>Vision Agent 修复建议</h3><div id="reviewSummary" class="reviewText">尚未复审。</div><div id="repairJson" class="repairBox">{}</div></div>'''
+          if right_anchor not in s: raise SystemExit('right anchor not found')
+          s=s.replace(right_anchor,right_anchor+'\n  '+review_cards)
+
+          old_ui=re.search(r"const ui=\{.*?\};",s,re.S)
+          if not old_ui: raise SystemExit('ui object not found')
+          ui_text=old_ui.group(0)
+          ui_text=ui_text[:-2]+",review:$('review'),applyRepair:$('applyRepair'),autoReview:$('autoReview'),thinking:$('thinking'),thinkingState:$('thinkingState'),keyframes:$('keyframes'),reviewSummary:$('reviewSummary'),repairJson:$('repairJson')};"
+          s=s[:old_ui.start()]+ui_text+s[old_ui.end():]
+
+          s=s.replace("let templates={},actors=new Map(),plan=null,timeline=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true,captionsVisible=true;","let templates={},actors=new Map(),plan=null,timeline=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true,captionsVisible=true,pendingRepair=null,lastKeyframes=[];")
+          s=s.replace("new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'})","new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true})")
+
+          start=s.index('async function askDeepSeek(text){')
+          end=s.index('\nconst DEMO=',start)
+          new_block=r'''function setThinking(text,state='streaming'){ui.thinking.textContent=text||'';ui.thinking.scrollTop=ui.thinking.scrollHeight;ui.thinkingState.innerHTML=state==='streaming'?'<span class="liveDot"></span>streaming':state}
+function appendThinking(delta){if(!delta)return;if(ui.thinking.textContent==='等待 Agent…')ui.thinking.textContent='';ui.thinking.textContent+=delta;ui.thinking.scrollTop=ui.thinking.scrollHeight}
+async function streamDeepSeek(body,onContent){const key=ui.key.value.trim();if(!key)throw new Error('请先输入 DeepSeek API Key');body.stream=true;const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)});if(!r.ok)throw new Error(`DeepSeek ${r.status}: ${(await r.text()).slice(0,500)}`);const reader=r.body.getReader(),decoder=new TextDecoder();let buffer='',reasoning='',content='';setThinking('','streaming');while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split('\n');buffer=lines.pop()||'';for(const raw of lines){const line=raw.trim();if(!line.startsWith('data:'))continue;const payload=line.slice(5).trim();if(!payload||payload==='[DONE]')continue;let j;try{j=JSON.parse(payload)}catch{continue}const d=j.choices?.[0]?.delta||{};if(d.reasoning_content){reasoning+=d.reasoning_content;appendThinking(d.reasoning_content)}if(d.content){content+=d.content;if(onContent)onContent(content)}}}setThinking(reasoning||'（本轮没有 reasoning_content）','done');return {reasoning,content}}
+async function askDeepSeek(text){const key=ui.key.value.trim();if(!key)throw new Error('请先输入 DeepSeek API Key');sessionStorage.setItem('deepseek_api_key',key);const context={maxAssets:Number(ui.limit.value),availableAssets:CATALOG,currentDirectorPlan:plan,conversation:history.slice(-6)};const messages=[{role:'system',content:SYSTEM},{role:'user',content:`Runtime context:\n${JSON.stringify(context)}\n\nUser request:\n${text}`}];const body={model:'deepseek-v4-flash',messages,response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:7000};const out=await streamDeepSeek(body);const parsed=JSON.parse(out.content);history.push({user:text,assistant:parsed.assistant_message||'',plan:parsed});return parsed}
+function chooseKeyframes(){if(!plan)return[];return plan.shots.slice(0,6).map((shot,i)=>{const meaningful=shot.beats.find(b=>!['idle','pause','face'].includes(b.action))||shot.beats[0];let time=meaningful?(meaningful.start+meaningful.end)/2:(shot.start+shot.end)/2;time=clamp(time,shot.start+.05,shot.end-.05,(shot.start+shot.end)/2);return {time,shotId:shot.id,title:shot.title,caption:shot.caption,index:i+1}})}
+async function captureKeyframes(){if(!plan||!timeline)throw new Error('请先生成或加载一个动画');const wasPlaying=playing,oldTime=current,oldCamera=cameraDriven;playing=false;cameraDriven=true;const metas=chooseKeyframes(),frames=[];ui.keyframes.innerHTML='';for(const meta of metas){apply(meta.time);renderer.render(scene,camera);await new Promise(requestAnimationFrame);renderer.render(scene,camera);const dataUrl=renderer.domElement.toDataURL('image/jpeg',0.76);frames.push({...meta,dataUrl});const card=document.createElement('div');card.className='kf';card.innerHTML=`<img src="${dataUrl}" alt="${meta.title}"><div>${meta.index}. ${meta.time.toFixed(2)}s · ${meta.title}</div>`;ui.keyframes.appendChild(card)}current=oldTime;cameraDriven=oldCamera;apply(oldTime);renderer.render(scene,camera);playing=wasPlaying;lastKeyframes=frames;return frames}
+const REVIEW_SYSTEM=`You are the visual QA and repair agent for SceneForge Animate. You receive rendered keyframes from the current Three.js animation plus the current director plan. Inspect whether the intended story is visually understandable. Look for: actors off-screen or too small; wrong framing; unclear actor identity; collisions/overlap; teleport-like continuity problems; action timing that makes the story hard to read; camera presets that hide the important action. Return one complete corrected Director Plan JSON, not a patch. Keep the same schema and asset count unless a reduction is clearly needed. You may change shot timing, captions, cameraPreset, focus, positions, rotations and beats. Use only robot/fox and supported beats. Preserve the user's story. Output JSON only with fields assistant_message, review_summary, issues, title, summary, duration, assets, shots.`;
+async function reviewWithVision(frames){const key=ui.key.value.trim();if(!key)throw new Error('请先输入 DeepSeek API Key');const parts=[{type:'text',text:`Current Director Plan:\n${JSON.stringify(plan)}\n\nThe following images are rendered keyframes. Each preceding label gives time and shot. Diagnose the visual animation and return a complete repaired plan JSON.`}];for(const f of frames){parts.push({type:'text',text:`Keyframe ${f.index}: t=${f.time.toFixed(2)}s, shot=${f.title}, intended caption=${f.caption}`});parts.push({type:'image_url',image_url:{url:f.dataUrl,detail:'low'}})}const body={model:'deepseek-v4-flash-vision-exp',messages:[{role:'system',content:REVIEW_SYSTEM},{role:'user',content:parts}],response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:8000};let live='';const out=await streamDeepSeek(body,c=>{live=c;ui.repairJson.textContent=c||'{}'});const parsed=JSON.parse(out.content);return parsed}
+async function selfReview(){if(!plan)return;ui.review.disabled=true;ui.applyRepair.disabled=true;pendingRepair=null;setStatus('正在渲染关键帧…','warn');try{const frames=await captureKeyframes();setStatus(`已截取 ${frames.length} 帧，Vision Agent 正在复审…`,'warn');const raw=await reviewWithVision(frames);pendingRepair=sanitizePlan(raw);ui.reviewSummary.textContent=(raw.review_summary||'视觉复审完成。')+(Array.isArray(raw.issues)&&raw.issues.length?'\n问题：'+raw.issues.join('；'):'');ui.repairJson.textContent=JSON.stringify(pendingRepair,null,2);ui.applyRepair.disabled=false;log(raw.assistant_message||'Vision Agent 已生成修复 JSON。');setStatus('视觉复审完成：可查看并应用修复 JSON','good')}catch(e){console.error(e);log(e.message,'error');setStatus(e.message,'bad')}finally{ui.review.disabled=false}}
+async function generate(){const text=ui.prompt.value.trim();if(!text)return;log(text,'user');ui.generate.disabled=true;pendingRepair=null;ui.applyRepair.disabled=true;setStatus('Director Agent 正在流式规划镜头和节拍…','warn');try{const raw=await askDeepSeek(text);plan=sanitizePlan(raw);log(raw.assistant_message||'导演计划已生成');renderPlan();if(ui.autoReview.checked)await selfReview()}catch(e){console.error(e);log(e.message,'error');setStatus(e.message,'bad')}finally{ui.generate.disabled=false}}
+'''
+          s=s[:start]+new_block+s[end:]
+
+          handler_anchor="ui.generate.onclick=generate;ui.demo.onclick=()=>{plan=sanitizePlan(DEMO);history=[];renderPlan();log('已加载 Phase 1.1 清晰 Demo。')};"
+          handler_new="ui.generate.onclick=generate;ui.review.onclick=selfReview;ui.applyRepair.onclick=()=>{if(!pendingRepair)return;plan=pendingRepair;pendingRepair=null;ui.applyRepair.disabled=true;history.push({user:'Vision self-review repair applied',plan});renderPlan();log('已应用 Vision Agent 修复 JSON。')};ui.demo.onclick=()=>{plan=sanitizePlan(DEMO);history=[];pendingRepair=null;ui.applyRepair.disabled=true;renderPlan();log('已加载 Phase 1.2 清晰 Demo。')};"
+          if handler_anchor not in s: raise SystemExit('handler anchor not found')
+          s=s.replace(handler_anchor,handler_new)
+          s=s.replace("ui.reset.onclick=()=>{history=[];plan=null;timeline=null;clearWorld();","ui.reset.onclick=()=>{history=[];plan=null;timeline=null;pendingRepair=null;lastKeyframes=[];ui.applyRepair.disabled=true;ui.keyframes.innerHTML='<div class=\"hint\">点击“截帧自检”后显示。</div>';ui.reviewSummary.textContent='尚未复审。';ui.repairJson.textContent='{}';setThinking('等待 Agent…','idle');clearWorld();")
+          s=s.replace('Phase 1.1 就绪：角色区分 + 连续状态 + 镜头预设 + 节拍 + Debug 字幕','Phase 1.2 就绪：流式思考 + 关键帧 + Vision 自检 + 修复 JSON')
+          s=s.replace('Phase 1.1：${plan.assets.length} 个角色 · ${plan.shots.length} 个镜头','Phase 1.2：${plan.assets.length} 个角色 · ${plan.shots.length} 个镜头')
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Syntax check Phase 1.2 JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase12.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase12.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase12.mjs
+
+      - name: Sanity checks
+        run: |
+          grep -q "deepseek-v4-flash-vision-exp" sceneforge-animate/phase12.html
+          grep -q "captureKeyframes" sceneforge-animate/phase12.html
+          grep -q "reasoning_content" sceneforge-animate/phase12.html
+          grep -q "应用修复" sceneforge-animate/phase12.html
+
+      - name: Commit Phase 1.2
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase12.html
+          git commit -m 'Add SceneForge Animate Phase 1.2 visual self-review agent'
+          git push origin sceneforge-v3
