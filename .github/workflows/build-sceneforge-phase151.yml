@@ -1,0 +1,48 @@
+name: Build SceneForge Animate Phase 1.5.1
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase151.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Build page
+        run: python sceneforge-animate/build_phase151.py
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase151.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase151.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase151.mjs
+      - name: Sanity checks
+        run: |
+          grep -q "用户文本反馈" sceneforge-animate/phase151.html
+          grep -q "fullContextSnapshot" sceneforge-animate/phase151.html
+          grep -q "agentHistory:structuredClone(history)" sceneforge-animate/phase151.html
+          grep -q "compiledTimeline" sceneforge-animate/phase151.html
+          grep -q "latestVisualQA" sceneforge-animate/phase151.html
+          grep -q "reviewUserText" sceneforge-animate/phase151.html
+          grep -q "清除上下文" sceneforge-animate/phase151.html
+          ! grep -q "feedbackVideo" sceneforge-animate/phase151.html
+          ! grep -q "extractFeedbackVideoFrames" sceneforge-animate/phase151.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase151.html
+          git commit -m 'Add SceneForge Animate Phase 1.5.1 full-context text feedback'
+          git push origin sceneforge-v3
