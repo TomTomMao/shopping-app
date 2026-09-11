@@ -1,0 +1,48 @@
+name: Build SceneForge Phase 3.2
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - 'sceneforge-animate/build_phase32.py'
+      - '.github/workflows/build-sceneforge-phase32.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build Phase 3.2
+        run: python sceneforge-animate/build_phase32.py
+      - name: Validate generated page
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          p=Path('sceneforge-animate/phase32.html')
+          s=p.read_text(encoding='utf-8')
+          for marker in ['Phase 3.2','动画预览','buildAnimation32','ANIM_DIRECTOR32','runtimeUrl32']:
+              assert marker in s, marker
+          scripts=re.findall(r'<script type="module">(.*?)</script>',s,re.S)
+          assert scripts
+          js=scripts[-1]
+          q=Path('/tmp/phase32.mjs');q.write_text(js,encoding='utf-8')
+          subprocess.run(['node','--check',str(q)],check=True)
+          print('phase32 checks passed')
+          PY
+      - name: Commit generated page
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase32.html
+          git diff --cached --quiet || git commit -m 'Build SceneForge Phase 3.2 integrated animation page'
+          git push
