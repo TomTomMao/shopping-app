@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SceneForge Animate · Phase 1.3</title>
+<style>
+:root{color-scheme:dark;--bg:#080b10;--panel:#111722;--card:#151d29;--line:#29364b;--text:#eef3ff;--muted:#91a0b8;--good:#8ce4a5;--warn:#ffd27d;--bad:#ff9aa5}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+body{overflow:hidden}button,input,textarea,select{font:inherit}button{background:#1d2736;color:#fff;border:1px solid #394863;border-radius:9px;padding:8px 10px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.primary{background:linear-gradient(135deg,#6f8cff,#9867ff);border:0;font-weight:700}.apply{background:#173c2b;border-color:#397453}
+.app{height:100%;display:grid;grid-template-columns:380px minmax(600px,1fr) 390px}.side,.right{background:var(--panel);padding:14px;overflow:auto}.side{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}
+.brand{font-weight:850;font-size:21px}.sub{font-size:12px;color:var(--muted);margin:5px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px;margin-bottom:10px}.card h3{font-size:12px;margin:0 0 8px}.field{margin-bottom:9px}.field label{display:flex;justify-content:space-between;font-size:11px;color:#9ba9bf;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;background:#090e16;color:#fff;border:1px solid #34435e;border-radius:9px;padding:8px}.field textarea{height:100px;resize:vertical}.row{display:flex;gap:7px}.row>*{flex:1}.hint{font-size:10px;color:#74839a;line-height:1.45}.check{font-size:10px;color:#95a5bd;display:flex;align-items:center;gap:6px;margin-top:7px}.check input{width:auto}
+.thinking,.logbox{height:170px;overflow:auto;background:#0a0f17;border:1px solid #263349;border-radius:9px;padding:7px;white-space:pre-wrap;font-size:11px;line-height:1.4}.thinking{font-family:ui-monospace,monospace;color:#b8c6dc}.json{font-family:ui-monospace,monospace;font-size:9px;white-space:pre-wrap;word-break:break-word;background:#0a0f17;border:1px solid #263349;border-radius:9px;padding:7px;max-height:230px;overflow:auto}.story,.review{font-size:11px;line-height:1.5}.asset{font-size:10px;border:1px solid #2c394f;border-radius:8px;padding:6px;margin-bottom:5px;background:#101722}
+.workspace{display:grid;grid-template-rows:1fr 160px;min-width:0}.stage{position:relative;min-height:0}.top{position:absolute;z-index:6;left:50%;top:10px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:#0b0f16df;border:1px solid #34425c;border-radius:10px;padding:6px}.status{position:absolute;left:10px;bottom:10px;z-index:6;background:#0b0f16df;border:1px solid #34425c;border-radius:9px;padding:7px 9px;font-size:11px}.captionWrap{position:absolute;z-index:5;left:50%;bottom:42px;transform:translateX(-50%);width:min(760px,80%);text-align:center}.caption{font-weight:750;font-size:20px;text-shadow:0 2px 8px #000}.badge{display:inline-block;font-size:10px;padding:4px 8px;border-radius:999px;background:#111927e8;border:1px solid #41516e;color:#a9bce2;margin-bottom:7px}
+.timeline{border-top:1px solid var(--line);background:#0d121a;padding:10px}.timeline input{width:100%}.shots{height:65px;position:relative;border:1px solid var(--line);border-radius:9px;background:#121a26;margin-top:7px;overflow:hidden}.shot{position:absolute;top:6px;bottom:6px;background:#25385e;border:1px solid #526a9a;border-radius:7px;padding:5px;font-size:9px;overflow:hidden}
+.keyframes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.kf{border:1px solid #34435e;border-radius:8px;overflow:hidden;background:#0b1018}.kf img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}.kf div{font-size:8px;padding:4px;line-height:1.25}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}canvas{display:block;width:100%;height:100%}
+.validation{font-size:10px;line-height:1.45;padding:7px;border-radius:8px;background:#0b1018;border:1px solid #31415b;margin-bottom:7px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">SceneForge Animate · Phase 1.3</div>
+  <div class="sub">Director → dense multi-view QA → validated Repair JSON</div>
+  <div class="card"><h3>创作</h3>
+    <div class="field"><label>DeepSeek API Key</label><input id="key" type="password" placeholder="sk-..." autocomplete="off"/></div>
+    <div class="field"><label>描述</label><textarea id="prompt">做一个14秒搞笑动画：两个机器人碰面，一个挥手，另一个突然跳舞，最后一起跑掉。镜头要让故事容易看懂。</textarea></div>
+    <div class="field"><label>最大资产数 <b id="limitLabel">4</b></label><input id="limit" type="range" min="1" max="8" value="4"/></div>
+    <div class="row"><button id="generate" class="primary">✨ Agent 生成</button><button id="demo">清晰 Demo</button></div>
+    <div class="row" style="margin-top:7px"><button id="clearContext">清除上下文</button><button id="clearKey">清除 Key</button></div>
+  </div>
+
+  <div class="card"><h3>视觉自检设置</h3>
+    <div class="row">
+      <div class="field"><label>每秒采样帧数</label>
+        <select id="sampleFps"><option value="0.25">0.25 fps</option><option value="0.5">0.5 fps</option><option value="1" selected>1 fps</option><option value="2">2 fps</option></select>
+      </div>
+      <div class="field"><label>最多图片数</label><input id="maxImages" type="number" min="9" max="90" step="3" value="45"/></div>
+    </div>
+    <div class="hint">每个采样时刻截 3 张：导演视角、左侧视角、右侧视角。若超过图片上限，会均匀抽样时间点，但始终成组三视角。</div>
+    <div class="row" style="margin-top:8px"><button id="review">👁 多视角自检</button><button id="applyRepair" class="apply" disabled>✓ 应用修复</button></div>
+    <label class="check"><input id="autoReview" type="checkbox"/> Agent 生成后自动视觉自检</label>
+  </div>
+
+  <div class="card"><h3>实时思考流</h3><div id="thinking" class="thinking">等待 Agent…</div></div>
+  <div class="card"><h3>Agent 日志</h3><div id="logs" class="logbox">Phase 1.3 就绪。</div></div>
+</aside>
+
+<section class="workspace">
+  <main id="stage" class="stage">
+    <div class="top"><button id="play">▶ 播放</button><button id="restart">↺ 重播</button><button id="orbit">自由镜头</button><span id="time">0.0 / 14.0s</span></div>
+    <div class="captionWrap"><div id="shotBadge" class="badge">Shot</div><div id="caption" class="caption"></div></div>
+    <div id="status" class="status">正在加载本地资产…</div>
+  </main>
+  <section class="timeline"><input id="seek" type="range" min="0" max="14" step="0.01" value="0"/><div id="shots" class="shots"></div></section>
+</section>
+
+<aside class="right">
+  <div class="card"><h3>Storyboard</h3><div id="story" class="story"></div></div>
+  <div class="card"><h3>资产</h3><div id="assets"></div></div>
+  <div class="card"><h3>视觉自检采样</h3><div id="sampleInfo" class="validation">尚未采样。</div><div id="keyframes" class="keyframes"><div class="hint">点击“多视角自检”后显示。</div></div></div>
+  <div class="card"><h3>Repair JSON 校验</h3><div id="validation" class="validation">尚无修复 JSON。</div><div id="reviewSummary" class="review">尚未复审。</div><div id="repairJson" class="json">{}</div></div>
+  <div class="card"><h3>Director Plan JSON</h3><div id="json" class="json">{}</div></div>
+</aside>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+const $=id=>document.getElementById(id);
+const ui={
+  key:$('key'),prompt:$('prompt'),limit:$('limit'),limitLabel:$('limitLabel'),generate:$('generate'),demo:$('demo'),
+  clearContext:$('clearContext'),clearKey:$('clearKey'),sampleFps:$('sampleFps'),maxImages:$('maxImages'),review:$('review'),
+  applyRepair:$('applyRepair'),autoReview:$('autoReview'),thinking:$('thinking'),logs:$('logs'),stage:$('stage'),
+  play:$('play'),restart:$('restart'),orbit:$('orbit'),time:$('time'),seek:$('seek'),shots:$('shots'),story:$('story'),
+  assets:$('assets'),sampleInfo:$('sampleInfo'),keyframes:$('keyframes'),validation:$('validation'),
+  reviewSummary:$('reviewSummary'),repairJson:$('repairJson'),json:$('json'),status:$('status'),shotBadge:$('shotBadge'),caption:$('caption')
+};
+ui.key.value=sessionStorage.getItem('deepseek_api_key')||'';
+ui.limit.oninput=()=>ui.limitLabel.textContent=ui.limit.value;
+ui.key.onchange=()=>{const v=ui.key.value.trim();v?sessionStorage.setItem('deepseek_api_key',v):sessionStorage.removeItem('deepseek_api_key')};
+
+const CATALOG={
+  robot:{file:'./assets/RobotExpressive.glb',clips:['Idle','Walking','Running','Dance','Wave','Jump','Yes','No','Punch','ThumbsUp','Standing','Sitting']},
+  fox:{file:'./assets/Fox.glb',clips:['Survey','Walk','Run']}
+};
+const CAM={wide:[0,5.4,12.5],medium:[0,3.2,7.2],close:[0,2.25,4.5],reaction:[2.7,2.5,5.1],follow:[4.2,3.4,7.2]};
+const ACTIONS=['walk','run','wave','dance','react','jump','idle','pause','face'];
+let templates={},actors=new Map(),plan=null,timeline={actions:[]},pendingRepair=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true,lastFrames=[];
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080d18);
+const camera=new THREE.PerspectiveCamera(48,1,.1,200);
+camera.position.set(0,4.5,11);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=true;
+ui.stage.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.enabled=false;controls.target.set(0,1.5,0);
+scene.add(new THREE.HemisphereLight(0xbfd2ff,0x21180f,2));
+const sun=new THREE.DirectionalLight(0xffefd1,3.5);sun.position.set(8,13,7);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(34,22),new THREE.MeshStandardMaterial({color:0x182131}));
+floor.rotation.x=-Math.PI/2;scene.add(floor);
+const world=new THREE.Group();scene.add(world);
+const loader=new GLTFLoader();
+
+function log(t){ui.logs.textContent+=`\n${t}`;ui.logs.scrollTop=ui.logs.scrollHeight}
+function status(t,c=''){ui.status.textContent=t;ui.status.className='status '+c}
+function clamp(n,a,b,f=0){n=Number(n);return Number.isFinite(n)?Math.max(a,Math.min(b,n)):f}
+function smooth(t){t=clamp(t,0,1);return t*t*(3-2*t)}
+function lerp3(a,b,t){return a.map((v,i)=>THREE.MathUtils.lerp(v,b[i],t))}
+function actionClip(type,a){if(type==='fox')return a==='run'?'Run':a==='walk'?'Walk':'Survey';return ({walk:'Walking',run:'Running',wave:'Wave',dance:'Dance',react:'No',jump:'Jump',idle:'Idle',pause:'Idle'})[a]||'Idle'}
+
+async function preload(){
+  for(const [k,m] of Object.entries(CATALOG)){
+    try{const g=await loader.loadAsync(m.file);templates[k]={scene:g.scene,animations:g.animations}}
+    catch(e){console.error(e);log(`资产 ${k} 加载失败，使用 fallback`)}
+  }
+  status('本地资产已加载','good');
+}
+function fallback(){
+  const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0x7895ff});
+  const b=new THREE.Mesh(new THREE.BoxGeometry(1,1.4,.65),m);b.position.y=1;g.add(b);
+  const h=new THREE.Mesh(new THREE.SphereGeometry(.45),m);h.position.y=2;g.add(h);
+  return {scene:g,animations:[]};
+}
+function clearWorld(){actors.clear();while(world.children.length)world.remove(world.children[0])}
+function createActor(spec){
+  const tpl=templates[spec.type]||fallback();
+  let model;try{model=SkeletonUtils.clone(tpl.scene)}catch{model=fallback().scene}
+  model.traverse(n=>{if(n.isMesh){n.visible=true;n.frustumCulled=false}});
+  model.scale.setScalar(spec.type==='fox'?.04:1);
+  const wrap=new THREE.Group();wrap.add(model);world.add(wrap);
+  const mixer=new THREE.AnimationMixer(model),actions={};
+  for(const cl of tpl.animations||[])actions[cl.name]=mixer.clipAction(cl);
+  actors.set(spec.id,{spec,wrap,mixer,actions,currentClip:null});
+}
+function setClip(a,name,t){
+  const n=(CATALOG[a.spec.type]?.clips||[]).find(x=>x.toLowerCase()===String(name).toLowerCase());
+  if(!n||!a.actions[n])return;
+  if(a.currentClip!==n){a.mixer.stopAllAction();a.actions[n].reset().play();a.currentClip=n}
+  a.mixer.setTime(Math.max(0,t));
+}
+
+function validatePlanShape(raw){
+  const errors=[];
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return ['root must be an object'];
+  if(!Number.isFinite(Number(raw.duration)))errors.push('duration must be numeric');
+  if(!Array.isArray(raw.assets)||raw.assets.length<1)errors.push('assets must be a non-empty array');
+  if(!Array.isArray(raw.shots)||raw.shots.length<1)errors.push('shots must be a non-empty array');
+  const ids=new Set();
+  if(Array.isArray(raw.assets))for(const [i,a] of raw.assets.entries()){
+    if(!a||typeof a!=='object'){errors.push(`assets[${i}] must be object`);continue}
+    if(!a.id)errors.push(`assets[${i}].id missing`);
+    else if(ids.has(String(a.id)))errors.push(`duplicate asset id: ${a.id}`);
+    else ids.add(String(a.id));
+    if(a.type&&!['robot','fox'].includes(a.type))errors.push(`assets[${i}].type unsupported`);
+    if(!Array.isArray(a.position)||a.position.length!==3)errors.push(`assets[${i}].position must be [x,y,z]`);
+  }
+  if(Array.isArray(raw.shots))for(const [i,s] of raw.shots.entries()){
+    if(!s||typeof s!=='object'){errors.push(`shots[${i}] must be object`);continue}
+    if(!Number.isFinite(Number(s.start))||!Number.isFinite(Number(s.end)))errors.push(`shots[${i}] start/end invalid`);
+    if(s.cameraPreset&&!Object.keys(CAM).includes(s.cameraPreset))errors.push(`shots[${i}].cameraPreset unsupported`);
+    if(!Array.isArray(s.beats))errors.push(`shots[${i}].beats must be array`);
+    if(Array.isArray(s.beats))for(const [j,b] of s.beats.entries()){
+      if(!b?.target||!ids.has(String(b.target)))errors.push(`shots[${i}].beats[${j}] target invalid`);
+      if(!ACTIONS.includes(b?.action))errors.push(`shots[${i}].beats[${j}] action invalid`);
+      if(!Number.isFinite(Number(b?.start))||!Number.isFinite(Number(b?.end)))errors.push(`shots[${i}].beats[${j}] time invalid`);
+    }
+  }
+  return errors;
+}
+function parseJsonLoose(text){
+  const attempts=[];
+  const raw=String(text||'').trim();
+  attempts.push(raw);
+  const unfenced=raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+  if(unfenced!==raw)attempts.push(unfenced);
+  const first=raw.indexOf('{'),last=raw.lastIndexOf('}');
+  if(first>=0&&last>first)attempts.push(raw.slice(first,last+1));
+  let lastError=null;
+  for(const a of attempts){try{return {value:JSON.parse(a),source:a}}catch(e){lastError=e}}
+  throw new Error(`JSON parse failed: ${lastError?.message||'invalid JSON'}`);
+}
+function sanitize(raw){
+  const duration=clamp(raw?.duration,6,40,14),limit=Number(ui.limit.value);
+  const assets=(Array.isArray(raw?.assets)?raw.assets:[]).slice(0,limit).map((a,i)=>({
+    id:String(a.id||`a${i}`).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,40),
+    label:String(a.label||`角色${i+1}`).slice(0,40),
+    type:['robot','fox'].includes(a.type)?a.type:'robot',
+    color:String(a.color||'#7895ff'),
+    position:[clamp(a.position?.[0],-8,8,i*3-2),0,clamp(a.position?.[2],-4,4,0)],
+    rotationY:clamp(a.rotationY,-6.3,6.3,0)
+  }));
+  if(!assets.length)assets.push({id:'robot',label:'机器人',type:'robot',color:'#7895ff',position:[0,0,0],rotationY:0});
+  const ids=new Set(assets.map(a=>a.id));
+  const shots=(Array.isArray(raw?.shots)?raw.shots:[]).slice(0,8).map((s,i)=>({
+    id:String(s.id||`s${i}`),
+    title:String(s.title||`Shot ${i+1}`).slice(0,60),
+    caption:String(s.caption||'').slice(0,140),
+    start:clamp(s.start,0,duration,0),
+    end:clamp(s.end,0,duration,duration),
+    cameraPreset:Object.keys(CAM).includes(s.cameraPreset)?s.cameraPreset:'medium',
+    focus:(Array.isArray(s.focus)?s.focus:[]).filter(x=>ids.has(String(x))).map(String),
+    beats:(Array.isArray(s.beats)?s.beats:[]).filter(b=>ids.has(String(b.target))).slice(0,30).map(b=>({
+      target:String(b.target),
+      action:ACTIONS.includes(b.action)?b.action:'idle',
+      start:clamp(b.start,0,duration,0),
+      end:clamp(b.end,0,duration,duration),
+      to:Array.isArray(b.to)&&b.to.length===3?[clamp(b.to[0],-10,10),0,clamp(b.to[2],-5,5)]:null,
+      rotationY:Number.isFinite(Number(b.rotationY))?clamp(b.rotationY,-6.3,6.3,0):null
+    }))
+  })).filter(s=>s.end>s.start);
+  if(!shots.length)shots.push({id:'s1',title:'Main',caption:'',start:0,end:duration,cameraPreset:'wide',focus:assets.map(a=>a.id),beats:[]});
+  return {title:String(raw?.title||'Animation').slice(0,100),summary:String(raw?.summary||'').slice(0,700),duration,assets,shots};
+}
+function compile(){
+  const curs=new Map(plan.assets.map(a=>[a.id,{pos:[...a.position],rot:a.rotationY}])),actions=[];
+  for(const b of plan.shots.flatMap(s=>s.beats).sort((a,b)=>a.start-b.start)){
+    const spec=plan.assets.find(x=>x.id===b.target),st=curs.get(b.target);if(!spec||!st)continue;
+    if(['walk','run'].includes(b.action)){
+      const to=b.to||[st.pos[0]+2,0,st.pos[2]];
+      actions.push({target:b.target,type:'move',start:b.start,end:b.end,from:[...st.pos],to:[...to],clip:actionClip(spec.type,b.action)});
+      st.pos=[...to];
+    }else if(b.action==='face'&&b.rotationY!==null){
+      actions.push({target:b.target,type:'rotate',start:b.start,end:b.end,from:st.rot,to:b.rotationY});st.rot=b.rotationY;
+    }else actions.push({target:b.target,type:'clip',start:b.start,end:b.end,clip:actionClip(spec.type,b.action)});
+  }
+  timeline={actions};
+}
+function stateAt(id,t){
+  const spec=plan.assets.find(a=>a.id===id);
+  let pos=[...spec.position],rot=spec.rotationY,clip=actionClip(spec.type,'idle'),clipStart=0;
+  for(const a of timeline.actions){
+    if(a.target!==id||t<a.start)continue;
+    if(a.type==='move'){
+      pos=t>=a.end?[...a.to]:lerp3(a.from,a.to,smooth((t-a.start)/Math.max(.001,a.end-a.start)));
+      clip=a.clip;clipStart=a.start;
+    }else if(a.type==='rotate')rot=t>=a.end?a.to:THREE.MathUtils.lerp(a.from,a.to,smooth((t-a.start)/Math.max(.001,a.end-a.start)));
+    else if(a.type==='clip'&&t<=a.end){clip=a.clip;clipStart=a.start}
+  }
+  return {pos,rot,clip,clipTime:Math.max(0,t-clipStart)};
+}
+function shotAt(t){return plan.shots.find(s=>t>=s.start&&t<s.end)||plan.shots.at(-1)}
+function focusAt(t){
+  const sh=shotAt(t),ids=(sh?.focus?.length?sh.focus:plan.assets.map(a=>a.id));
+  const pts=ids.map(id=>stateAt(id,t).pos);
+  return pts.length?[pts.reduce((q,p)=>q+p[0],0)/pts.length,1.4,pts.reduce((q,p)=>q+p[2],0)/pts.length]:[0,1.4,0];
+}
+function apply(t){
+  for(const spec of plan.assets){
+    const a=actors.get(spec.id);if(!a)continue;const st=stateAt(spec.id,t);
+    a.wrap.position.fromArray(st.pos);a.wrap.rotation.y=st.rot;setClip(a,st.clip,st.clipTime);
+  }
+  const sh=shotAt(t);
+  if(sh){
+    const target=focusAt(t),off=CAM[sh.cameraPreset]||CAM.medium;
+    if(cameraDriven){camera.position.set(target[0]+off[0],off[1],target[2]+off[2]);camera.lookAt(...target)}
+    ui.shotBadge.textContent=`${sh.title} · ${sh.cameraPreset}`;ui.caption.textContent=sh.caption;
+  }
+  ui.time.textContent=`${t.toFixed(1)} / ${plan.duration.toFixed(1)}s`;ui.seek.value=String(t);
+}
+function renderPlan(){
+  compile();clearWorld();plan.assets.forEach(createActor);
+  ui.json.textContent=JSON.stringify(plan,null,2);
+  ui.story.innerHTML=`<b>${plan.title}</b><br><br>${plan.summary}<br><br>${plan.shots.map(s=>`<b>${s.title}</b> ${s.start.toFixed(1)}–${s.end.toFixed(1)}s<br>${s.caption}`).join('<br><br>')}`;
+  ui.assets.innerHTML=plan.assets.map(a=>`<div class="asset"><b>${a.label}</b><br>${a.type} · [${a.position.join(', ')}]</div>`).join('');
+  ui.seek.max=String(plan.duration);ui.shots.innerHTML='';
+  for(const s of plan.shots){const d=document.createElement('div');d.className='shot';d.style.left=`${100*s.start/plan.duration}%`;d.style.width=`${Math.max(2,100*(s.end-s.start)/plan.duration)}%`;d.textContent=s.title;ui.shots.appendChild(d)}
+  current=0;playing=false;apply(0);status('动画已编译','good');
+}
+
+const DIRECTOR_SYSTEM=`You are SceneForge Animate Director. Return one JSON object only. Use assets robot/fox; beats walk run wave dance react jump idle pause face; cameraPreset wide medium close reaction follow. Produce a readable 3-5 shot animation. Keep continuity and avoid teleporting. Output {assistant_message,title,summary,duration,assets:[{id,label,type,color,position:[x,0,z],rotationY}],shots:[{id,title,caption,start,end,cameraPreset,focus:[ids],beats:[{target,action,start,end,to?,rotationY?}]}]}.`;
+const JSON_REPAIR_SYSTEM=`You repair malformed JSON for SceneForge Animate. Return exactly one valid JSON object and no markdown. Preserve the intended animation content. Required root fields: title, summary, duration, assets, shots. assets and shots must be arrays. Do not explain.`;
+
+async function stream(body){
+  const key=ui.key.value.trim();if(!key)throw new Error('请先输入 API Key');
+  body.stream=true;
+  const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(`DeepSeek ${r.status}: ${(await r.text()).slice(0,500)}`);
+  const reader=r.body.getReader(),dec=new TextDecoder();let buf='',content='';
+  ui.thinking.textContent='';
+  while(true){
+    const {done,value}=await reader.read();if(done)break;
+    buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+    for(const raw of lines){
+      const line=raw.trim();if(!line.startsWith('data:'))continue;
+      const p=line.slice(5).trim();if(!p||p==='[DONE]')continue;
+      let j;try{j=JSON.parse(p)}catch{continue}
+      const d=j.choices?.[0]?.delta||{};
+      if(d.reasoning_content){ui.thinking.textContent+=d.reasoning_content;ui.thinking.scrollTop=ui.thinking.scrollHeight}
+      if(d.content)content+=d.content;
+    }
+  }
+  return content;
+}
+async function repairMalformedJson(text,why){
+  log(`JSON 校验失败，启动自动 JSON 修复：${why}`);
+  const content=await stream({
+    model:'deepseek-flash',
+    messages:[{role:'system',content:JSON_REPAIR_SYSTEM},{role:'user',content:`Validation problem: ${why}\nMalformed output:\n${text}`}],
+    response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'low',max_tokens:7000
+  });
+  return parseJsonLoose(content).value;
+}
+async function parseValidateOrRepair(content,label){
+  let raw,errors=[];
+  try{raw=parseJsonLoose(content).value;errors=validatePlanShape(raw)}
+  catch(e){errors=[e.message]}
+  if(errors.length){
+    ui.validation.className='validation warn';ui.validation.textContent=`${label} 首次 JSON 无效：${errors.join('；')}。正在自动修复…`;
+    raw=await repairMalformedJson(content,errors.join('; '));
+    const errors2=validatePlanShape(raw);
+    if(errors2.length)throw new Error(`自动 JSON 修复后仍不合法：${errors2.join('；')}`);
+    ui.validation.className='validation good';ui.validation.textContent=`${label}：JSON 自动修复成功并通过结构校验。`;
+  }else{
+    ui.validation.className='validation good';ui.validation.textContent=`${label}：JSON.parse + 结构校验通过。`;
+  }
+  return raw;
+}
+async function generate(){
+  ui.generate.disabled=true;
+  try{
+    const key=ui.key.value.trim();if(key)sessionStorage.setItem('deepseek_api_key',key);
+    status('Director Agent 正在流式生成…','warn');
+    const context={maxAssets:Number(ui.limit.value),currentPlan:plan,history:history.slice(-5)};
+    const content=await stream({
+      model:'deepseek-flash',
+      messages:[{role:'system',content:DIRECTOR_SYSTEM},{role:'user',content:`Context:\n${JSON.stringify(context)}\nRequest:\n${ui.prompt.value}`}],
+      response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:8000
+    });
+    const raw=await parseValidateOrRepair(content,'Director 输出');
+    plan=sanitize(raw);history.push({user:ui.prompt.value,plan});renderPlan();log(raw.assistant_message||'Director 完成');
+    if(ui.autoReview.checked)await selfReview();
+  }catch(e){console.error(e);status(e.message,'bad');log(e.message)}
+  finally{ui.generate.disabled=false}
+}
+
+function candidateTimes(){
+  const fps=clamp(ui.sampleFps.value,.25,2,1),step=1/fps,times=[];
+  for(let t=0;t<plan.duration;t+=step)times.push(Math.min(plan.duration-.03,Math.max(.03,t+.02)));
+  if(times.at(-1)<plan.duration-.2)times.push(plan.duration-.03);
+  const maxImages=clamp(ui.maxImages.value,9,90,45),maxTimes=Math.max(3,Math.floor(maxImages/3));
+  if(times.length<=maxTimes)return times;
+  const picked=[];
+  for(let i=0;i<maxTimes;i++){const idx=Math.round(i*(times.length-1)/(maxTimes-1));picked.push(times[idx])}
+  return [...new Set(picked)];
+}
+function setCameraView(view,t){
+  const target=focusAt(t);
+  if(view==='director'){
+    const sh=shotAt(t),off=CAM[sh?.cameraPreset]||CAM.medium;
+    camera.position.set(target[0]+off[0],off[1],target[2]+off[2]);
+  }else if(view==='left')camera.position.set(target[0]-9,3.6,target[2]);
+  else camera.position.set(target[0]+9,3.6,target[2]);
+  camera.lookAt(...target);
+}
+async function capture(){
+  const old=current,was=playing,oldDriven=cameraDriven,oldPos=camera.position.clone(),oldQuat=camera.quaternion.clone();
+  playing=false;cameraDriven=false;ui.keyframes.innerHTML='';
+  const times=candidateTimes(),frames=[],views=['director','left','right'];
+  ui.sampleInfo.textContent=`${times.length} 个时间点 × 3 视角 = ${times.length*3} 张图。正在截取…`;
+  for(const t of times){
+    apply(t);
+    const sh=shotAt(t);
+    for(const view of views){
+      setCameraView(view,t);renderer.render(scene,camera);await new Promise(requestAnimationFrame);renderer.render(scene,camera);
+      const dataUrl=renderer.domElement.toDataURL('image/jpeg',.62);
+      const frame={time:t,view,title:sh?.title||'',caption:sh?.caption||'',dataUrl};frames.push(frame);
+      const d=document.createElement('div');d.className='kf';d.innerHTML=`<img src="${dataUrl}" alt="${view}"><div>${t.toFixed(2)}s · ${view}<br>${sh?.title||''}</div>`;ui.keyframes.appendChild(d);
+    }
+  }
+  current=old;cameraDriven=oldDriven;camera.position.copy(oldPos);camera.quaternion.copy(oldQuat);apply(old);renderer.render(scene,camera);playing=was;lastFrames=frames;
+  ui.sampleInfo.className='validation good';ui.sampleInfo.textContent=`已截取 ${frames.length} 张：${times.length} 个时间点 × 3 视角（director / left / right）。`;
+  return frames;
+}
+
+const REVIEW_SYSTEM=`You are the visual QA and repair agent for SceneForge Animate. You receive dense time samples of a Three.js animation. Every sample time has three views: director, left, right. Diagnose story readability, actor visibility, framing, overlaps/collisions, continuity, action timing, camera focus, and obvious pose/location mistakes. Use the side views to catch depth overlap that the director view may hide. Return one COMPLETE corrected Director Plan JSON, not a patch. Preserve the user's story and supported schema. Include assistant_message, review_summary and issues, plus title, summary, duration, assets, shots. Output JSON only.`;
+
+async function selfReview(){
+  if(!plan)return;
+  ui.review.disabled=true;ui.applyRepair.disabled=true;pendingRepair=null;
+  try{
+    status('正在进行密集三视角截帧…','warn');
+    const frames=await capture();
+    const parts=[{type:'text',text:`Current plan:\n${JSON.stringify(plan)}\nThere are ${frames.length} images. Each time sample has director/left/right views. Review the full temporal sequence and return a repaired complete plan JSON.`}];
+    for(const f of frames){
+      parts.push({type:'text',text:`t=${f.time.toFixed(2)}s view=${f.view} shot=${f.title} intended=${f.caption}`});
+      parts.push({type:'image_url',image_url:{url:f.dataUrl,detail:'low'}});
+    }
+    status(`Vision Agent 正在复审 ${frames.length} 张图…`,'warn');
+    const content=await stream({
+      model:'deepseek-flash',
+      messages:[{role:'system',content:REVIEW_SYSTEM},{role:'user',content:parts}],
+      response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:10000
+    });
+    const raw=await parseValidateOrRepair(content,'Vision Repair 输出');
+    pendingRepair=sanitize(raw);
+    ui.reviewSummary.textContent=(raw.review_summary||'复审完成')+(Array.isArray(raw.issues)&&raw.issues.length?'\n问题：'+raw.issues.join('；'):'');
+    ui.repairJson.textContent=JSON.stringify(pendingRepair,null,2);
+    ui.applyRepair.disabled=false;status('Repair JSON 已通过校验，可应用','good');
+  }catch(e){console.error(e);status(e.message,'bad');log(e.message);ui.validation.className='validation bad';ui.validation.textContent=`修复失败：${e.message}`}
+  finally{ui.review.disabled=false}
+}
+
+const DEMO={
+  title:'机器人舞台偶遇',summary:'碰面、挥手、突然跳舞、一起跑掉。',duration:14,
+  assets:[
+    {id:'blue',label:'蓝色机器人',type:'robot',color:'#4da3ff',position:[-4,0,0],rotationY:1.57},
+    {id:'purple',label:'紫色机器人',type:'robot',color:'#c879ff',position:[4,0,0],rotationY:-1.57}
+  ],
+  shots:[
+    {id:'s1',title:'碰面',caption:'两位机器人走到中央',start:0,end:4,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'walk',start:.4,end:3,to:[-1.2,0,0]},{target:'purple',action:'walk',start:.4,end:3,to:[1.2,0,0]}]},
+    {id:'s2',title:'挥手',caption:'蓝色机器人挥手',start:4,end:7,cameraPreset:'close',focus:['blue'],beats:[{target:'blue',action:'wave',start:4.5,end:6.5}]},
+    {id:'s3',title:'跳舞',caption:'紫色机器人突然跳舞',start:7,end:10.2,cameraPreset:'reaction',focus:['purple','blue'],beats:[{target:'purple',action:'dance',start:7.4,end:10.1},{target:'blue',action:'react',start:8,end:9.5}]},
+    {id:'s4',title:'逃跑',caption:'两人一起跑掉',start:10.2,end:14,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'run',start:10.5,end:13.6,to:[8,0,0]},{target:'purple',action:'run',start:10.5,end:13.6,to:[10,0,0]}]}
+  ]
+};
+
+ui.generate.onclick=generate;
+ui.review.onclick=selfReview;
+ui.applyRepair.onclick=()=>{
+  if(!pendingRepair)return;
+  const errs=validatePlanShape(pendingRepair);
+  if(errs.length){ui.validation.className='validation bad';ui.validation.textContent=`禁止应用：${errs.join('；')}`;return}
+  plan=pendingRepair;pendingRepair=null;ui.applyRepair.disabled=true;history.push({event:'vision_repair_applied',plan});renderPlan();log('已应用通过校验的 Vision Repair JSON');
+};
+ui.demo.onclick=()=>{plan=sanitize(DEMO);pendingRepair=null;renderPlan();log('已加载清晰 Demo')};
+ui.clearContext.onclick=()=>{
+  history=[];pendingRepair=null;lastFrames=[];ui.applyRepair.disabled=true;ui.thinking.textContent='上下文已清除，当前动画保留。';ui.reviewSummary.textContent='尚未复审。';ui.repairJson.textContent='{}';ui.validation.className='validation';ui.validation.textContent='上下文已清除。当前动画仍保留。';ui.keyframes.innerHTML='<div class="hint">上下文已清除；当前动画未删除。</div>';log('已清除 Agent 对话上下文和复审缓存；当前动画保留。');
+};
+ui.clearKey.onclick=()=>{ui.key.value='';sessionStorage.removeItem('deepseek_api_key');log('API Key 已清除')};
+ui.play.onclick=()=>{playing=!playing;ui.play.textContent=playing?'⏸ 暂停':'▶ 播放'};
+ui.restart.onclick=()=>{current=0;playing=true;ui.play.textContent='⏸ 暂停';apply(0)};
+ui.orbit.onclick=()=>{cameraDriven=!cameraDriven;controls.enabled=!cameraDriven;ui.orbit.textContent=cameraDriven?'自由镜头':'跟随镜头'};
+ui.seek.oninput=()=>{current=Number(ui.seek.value);playing=false;ui.play.textContent='▶ 播放';apply(current)};
+
+function resize(){const w=ui.stage.clientWidth,h=ui.stage.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
+new ResizeObserver(resize).observe(ui.stage);resize();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(playing&&plan){current+=dt;if(current>=plan.duration)current=0;apply(current)}controls.update();renderer.render(scene,camera)}
+requestAnimationFrame(loop);
+await preload();plan=sanitize(DEMO);renderPlan();
+</script>
+</body>
+</html>
