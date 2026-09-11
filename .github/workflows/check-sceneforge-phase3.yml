@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: sceneforge-v3
+      - name: Build marker
+        run: echo 'Phase 3 verification'
       - name: Extract module
         run: |
           python - <<'PY'
