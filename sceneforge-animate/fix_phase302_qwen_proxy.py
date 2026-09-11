@@ -12,15 +12,10 @@ s=s.replace(old,new,1)
 s=s.replace("qwenKey:$('qwenKey'),verifyDeepseek", "qwenKey:$('qwenKey'),qwenProxy:$('qwenProxy'),verifyDeepseek")
 s=s.replace("ui.deepseekKey.value=session.get('sf3_deepseek');ui.meshyKey.value=session.get('sf3_meshy');ui.qwenKey.value=session.get('sf3_qwen');", "ui.deepseekKey.value=session.get('sf3_deepseek');ui.meshyKey.value=session.get('sf3_meshy');ui.qwenKey.value=session.get('sf3_qwen');ui.qwenProxy.value=session.get('sf3_qwen_proxy');")
 s=s.replace("[ui.qwenKey,'sf3_qwen','qwen']])", "[ui.qwenKey,'sf3_qwen','qwen'],[ui.qwenProxy,'sf3_qwen_proxy','qwen']])")
-# replace displayed endpoint card
 s=s.replace('<div class="apiCheck"><b>Qwen Endpoint</b><span class="endpoint">dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation</span></div>', '<div class="apiCheck"><b>Qwen Route</b><span class="endpoint">Browser → Qwen Proxy → DashScope</span></div>')
-# replace qwenEndpoint function and qwenImage request target
-s=s.replace("function qwenEndpoint(){return 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation'}", "function qwenProxyBase(){const v=ui.qwenProxy.value.trim().replace(/\\/$/,'');if(!v)throw new Error('请填写 Qwen Proxy URL');return v}\\nfunction qwenEndpoint(){return qwenProxyBase()+'/qwen-image'}")
-# headers via proxy
+s=s.replace("function qwenEndpoint(){return 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation'}", "function qwenProxyBase(){const v=ui.qwenProxy.value.trim().replace(/\\/$/,'');if(!v)throw new Error('请填写 Qwen Proxy URL');return v}\nfunction qwenEndpoint(){return qwenProxyBase()+'/qwen-image'}")
 s=s.replace("headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`}", "headers:{'Content-Type':'application/json','X-Qwen-Key':key}")
-# more precise proxy error text
 s=s.replace("providerError('Qwen',e,'dashscope.aliyuncs.com')", "providerError('Qwen Proxy',e,qwenProxyBase())")
-# replace verifyQwen block by slicing
 start=s.index('async function verifyQwen(){')
 end=s.index('async function verifyMeshy(){',start)
 new_verify=r'''async function verifyQwen(){
@@ -39,6 +34,5 @@ new_verify=r'''async function verifyQwen(){
 }
 '''
 s=s[:start]+new_verify+s[end:]
-# validate proxy present before qwenImage
 s=s.replace("const key=ui.qwenKey.value.trim();if(!key)throw new Error('请填写千问AI平台 API Key（sk-ws-...）');", "const key=ui.qwenKey.value.trim();if(!key)throw new Error('请填写千问AI平台 API Key（sk-ws-...）');qwenProxyBase();")
 p.write_text(s,encoding='utf-8')
