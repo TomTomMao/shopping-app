@@ -1,0 +1,49 @@
+name: Fix Phase 1.1 model visibility
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/fix-phase11-model-visibility.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Patch model creation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('sceneforge-animate/phase11.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function createActor(spec,index){const tpl=templates[spec.type]||fallback(spec.type),model=SkeletonUtils.clone(tpl.scene);const tint=new THREE.Color(spec.color||PALETTE[index%PALETTE.length]);model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;if(n.material){n.material=n.material.clone();if(n.material.color)n.material.color.lerp(tint,.33);if('emissive' in n.material){n.material.emissive=tint.clone().multiplyScalar(.12);n.material.emissiveIntensity=.6}}}});const wrap=new THREE.Group();wrap.add(model);const b=new THREE.Box3().setFromObject(model),size=b.getSize(new THREE.Vector3());model.scale.setScalar((spec.type==='fox'?1.55:2.65)/Math.max(.001,size.y));const b2=new THREE.Box3().setFromObject(model),center=b2.getCenter(new THREE.Vector3());model.position.set(-center.x,-b2.min.y,-center.z);const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.9,40),new THREE.MeshBasicMaterial({color:tint,side:THREE.DoubleSide,transparent:true,opacity:.85}));ring.rotation.x=-Math.PI/2;ring.position.y=.025;wrap.add(ring);wrap.add(makeLabel(spec.label,tint.getStyle()));world.add(wrap);const mixer=new THREE.AnimationMixer(model),actions={};for(const cl of tpl.animations||[])actions[cl.name]=mixer.clipAction(cl);const a={spec,wrap,mixer,actions,currentClip:null};actors.set(spec.id,a);return a}"""
+          new="""function createActor(spec,index){const tpl=templates[spec.type]||fallback(spec.type);let model;try{model=SkeletonUtils.clone(tpl.scene)}catch(e){console.warn('Skeleton clone failed, using fallback',e);model=fallback(spec.type).scene}const tint=new THREE.Color(spec.color||PALETTE[index%PALETTE.length]);let meshCount=0;model.visible=true;model.traverse(n=>{n.visible=true;if(n.isMesh){meshCount++;n.castShadow=true;n.receiveShadow=true;n.frustumCulled=false}});const wrap=new THREE.Group();wrap.add(model);if(spec.type==='fox'){model.scale.setScalar(.04);model.position.set(0,0,0)}else{model.scale.setScalar(1);model.position.set(0,0,0)}const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.9,40),new THREE.MeshBasicMaterial({color:tint,side:THREE.DoubleSide,transparent:true,opacity:.9,depthTest:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;wrap.add(ring);wrap.add(makeLabel(spec.label,tint.getStyle()));world.add(wrap);const mixer=new THREE.AnimationMixer(model),actions={};for(const cl of tpl.animations||[])actions[cl.name]=mixer.clipAction(cl);const a={spec,wrap,mixer,actions,currentClip:null};actors.set(spec.id,a);console.log('Actor ready',spec.id,'type=',spec.type,'meshes=',meshCount,'scale=',model.scale.x);return a}"""
+          if old not in s:
+              raise SystemExit('target createActor block not found')
+          s=s.replace(old,new)
+          s=s.replace("setStatus(`Phase 1.1：${plan.assets.length} 个角色，${plan.shots.length} 个清晰镜头`,'good')","setStatus(`Phase 1.1：${plan.assets.length} 个角色，${plan.shots.length} 个清晰镜头 · GLB 固定尺度`,'good')")
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase11.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase11.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase11.mjs
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase11.html
+          git commit -m 'Fix Phase 1.1 GLB model visibility scaling'
+          git push origin sceneforge-v3
