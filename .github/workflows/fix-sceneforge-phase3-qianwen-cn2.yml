@@ -1,0 +1,35 @@
+name: Fix SceneForge Phase 3 Qianwen CN 2
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - 'sceneforge-animate/phase3-cn-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - run: python sceneforge-animate/fix_phase3_qianwen_cn.py
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase3.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase3.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase3.mjs
+          grep -q 'dashscope.aliyuncs.com/compatible-mode/v1/images/generations' sceneforge-animate/phase3.html
+          grep -q 'sk-ws-' sceneforge-animate/phase3.html
+          ! grep -q 'workspaceId' sceneforge-animate/phase3.html
+          ! grep -q 'qwenRegion' sceneforge-animate/phase3.html
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase3.html
+          git commit -m 'Fix Phase 3 for mainland Qianwen API'
+          git push origin sceneforge-v3
