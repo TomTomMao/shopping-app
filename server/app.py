@@ -1,0 +1,154 @@
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+import httpx
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+ROOT = Path(__file__).resolve().parents[1]
+SCENEFORGE_DIR = ROOT / "sceneforge-animate"
+
+DEEPSEEK_BASE = "https://api.deepseek.com"
+MESHY_BASE = "https://api.meshy.ai"
+QWEN_ENDPOINT = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
+
+app = FastAPI(title="SceneForge Local Server", version="3.0.3")
+app.mount("/sceneforge-animate", StaticFiles(directory=SCENEFORGE_DIR), name="sceneforge-animate")
+
+
+def env_key(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise HTTPException(status_code=503, detail=f"Missing {name} in .env")
+    return value
+
+
+def filtered_headers(headers: dict[str, str]) -> dict[str, str]:
+    blocked = {"host", "content-length", "authorization", "x-qwen-key", "connection", "origin", "referer"}
+    return {k: v for k, v in headers.items() if k.lower() not in blocked}
+
+
+async def forward(request: Request, upstream_url: str, auth_key: str) -> Response:
+    body = await request.body()
+    headers = filtered_headers(dict(request.headers))
+    headers["Authorization"] = f"Bearer {auth_key}"
+    async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0), follow_redirects=True) as client:
+        try:
+            result = await client.request(
+                request.method,
+                upstream_url,
+                params=request.query_params,
+                headers=headers,
+                content=body or None,
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Upstream connection failed: {exc}") from exc
+    media_type = result.headers.get("content-type", "application/json").split(";", 1)[0]
+    return Response(content=result.content, status_code=result.status_code, media_type=media_type)
+
+
+LOCAL_SHIM = r'''
+<script>
+(() => {
+  // The existing Phase 3 UI keeps its provider-aware workflow, while localhost owns all secrets.
+  sessionStorage.setItem('sf3_deepseek', 'local-backend-managed');
+  sessionStorage.setItem('sf3_meshy', 'local-backend-managed');
+  sessionStorage.setItem('sf3_qwen', 'sk-ws-local-backend-managed');
+  sessionStorage.setItem('sf3_qwen_proxy', location.origin);
+
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input, init = {}) => {
+    const raw = typeof input === 'string' ? input : input.url;
+    let url;
+    try { url = new URL(raw, location.href); } catch { return nativeFetch(input, init); }
+    let target = null;
+    if (url.hostname === 'api.deepseek.com') target = '/api/deepseek' + url.pathname + url.search;
+    if (url.hostname === 'api.meshy.ai') target = '/api/meshy' + url.pathname + url.search;
+    if (!target) return nativeFetch(input, init);
+
+    const headers = new Headers(init.headers || (typeof input !== 'string' ? input.headers : undefined) || {});
+    headers.delete('Authorization');
+    headers.delete('X-Qwen-Key');
+    return nativeFetch(target, {...init, headers});
+  };
+
+  addEventListener('DOMContentLoaded', () => {
+    const ids = ['deepseekKey','meshyKey','qwenKey','qwenProxy'];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      el.disabled = true;
+      el.title = 'Local mode: configured in .env';
+    }
+    const brand = document.querySelector('.brand');
+    if (brand) brand.textContent = 'SceneForge Animate · Phase 3.0.3 Local';
+    const hint = document.querySelector('.card:nth-of-type(2) .hint');
+    if (hint) hint.textContent = '本地模式：API Key 由 server/.env 管理，浏览器不会直接保存供应商密钥。';
+  });
+})();
+</script>
+'''
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index() -> HTMLResponse:
+    html_path = SCENEFORGE_DIR / "phase3.html"
+    html = html_path.read_text(encoding="utf-8")
+    marker = '<script type="importmap">'
+    if marker not in html:
+        raise HTTPException(status_code=500, detail="Phase 3 page is missing importmap marker")
+    html = html.replace(marker, LOCAL_SHIM + "\n" + marker, 1)
+    return HTMLResponse(html)
+
+
+@app.get("/health")
+async def health() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "service": "sceneforge-local",
+        "providers": {
+            "deepseek": bool(os.getenv("DEEPSEEK_API_KEY", "").strip()),
+            "qwen": bool(os.getenv("QWEN_API_KEY", "").strip()),
+            "meshy": bool(os.getenv("MESHY_API_KEY", "").strip()),
+        },
+    }
+
+
+@app.api_route("/api/deepseek/{path:path}", methods=["GET", "POST"])
+async def deepseek_proxy(path: str, request: Request) -> Response:
+    return await forward(request, f"{DEEPSEEK_BASE}/{path}", env_key("DEEPSEEK_API_KEY"))
+
+
+@app.api_route("/api/meshy/{path:path}", methods=["GET", "POST"])
+async def meshy_proxy(path: str, request: Request) -> Response:
+    return await forward(request, f"{MESHY_BASE}/{path}", env_key("MESHY_API_KEY"))
+
+
+@app.post("/qwen-image")
+async def qwen_image(request: Request) -> Response:
+    return await forward(request, QWEN_ENDPOINT, env_key("QWEN_API_KEY"))
+
+
+@app.post("/verify-qwen")
+async def verify_qwen() -> JSONResponse:
+    key = env_key("QWEN_API_KEY")
+    payload = {
+        "model": "qwen-image-3.0-pro",
+        "input": {"messages": [{"role": "user", "content": []}]},
+        "parameters": {"prompt_extend": False},
+    }
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=20.0)) as client:
+        try:
+            result = await client.post(
+                QWEN_ENDPOINT,
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+                json=payload,
+            )
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Qwen connection failed: {exc}") from exc
+    return JSONResponse({"upstream_status": result.status_code, "upstream_body": result.text[:1000]})
