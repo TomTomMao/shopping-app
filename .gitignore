@@ -11,6 +11,12 @@
 npm-debug.log
 yarn-error.log
 
+# Python / SceneForge local
+/.venv/
+/server/.env
+__pycache__/
+*.pyc
+
 # IDEs and editors
 .idea/
 .project
