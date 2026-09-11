@@ -24,12 +24,8 @@
   <div class="card"><h3>API 设置</h3>
     <div class="field"><label>DeepSeek API Key</label><input id="deepseekKey" type="password" placeholder="sk-..."/></div>
     <div class="field"><label>Meshy API Key</label><input id="meshyKey" type="password" placeholder="Meshy API key"/></div>
-    <div class="field"><label>Alibaba Model Studio API Key</label><input id="qwenKey" type="password" placeholder="sk-..."/></div>
-    <div class="settings">
-      <div class="field"><label>Workspace ID</label><input id="workspaceId" placeholder="ws-... / workspace id"/></div>
-      <div class="field"><label>Model Studio 区域</label><select id="qwenRegion"><option value="ap-northeast-1" selected>东京</option><option value="ap-southeast-1">新加坡</option><option value="cn-beijing">北京</option><option value="cn-hongkong">香港</option><option value="eu-central-1">法兰克福</option></select></div>
-    </div>
-    <div class="hint">测试版 Key 只保存在当前浏览器 session。Qwen 默认使用 qwen-image-3.0-pro；Meshy 默认使用 latest。</div>
+    <div class="field"><label>千问AI平台 API Key（qianwenai.com）</label><input id="qwenKey" type="password" placeholder="sk-ws-..."/></div>
+    <div class="hint">千问AI平台（qianwenai.com）按量付费 Key 直接填写完整的 <b>sk-ws-...</b>。无需 Workspace ID，也无需选择区域。测试版 Key 只保存在当前浏览器 session。Qwen 默认使用 qwen-image-3.0-pro；Meshy 默认使用 latest。</div>
   </div>
 
   <div class="card"><h3>Planning Trace</h3><div id="trace" class="trace"><div class="empty">输入故事后点击“生成规划”。这里会显示 Agent 从故事理解到资产路由的阶段性结果。</div></div></div>
@@ -70,11 +66,11 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const $=id=>document.getElementById(id);
-const ui={prompt:$('prompt'),maxAssets:$('maxAssets'),maxAssetsLabel:$('maxAssetsLabel'),planBtn:$('planBtn'),clearBtn:$('clearBtn'),deepseekKey:$('deepseekKey'),meshyKey:$('meshyKey'),qwenKey:$('qwenKey'),workspaceId:$('workspaceId'),qwenRegion:$('qwenRegion'),trace:$('trace'),storyBlock:$('storyBlock'),shots:$('shots'),assetsPlan:$('assetsPlan'),approveAllBtn:$('approveAllBtn'),approvePlanBtn:$('approvePlanBtn'),startBtn:$('startBtn'),jobs:$('jobs'),inventory:$('inventory'),uploadInput:$('uploadInput'),approvalStatus:$('approvalStatus'),detail:$('detail'),contextJson:$('contextJson'),globalText:$('globalText'),globalBar:$('globalBar'),toast:$('toast')};
+const ui={prompt:$('prompt'),maxAssets:$('maxAssets'),maxAssetsLabel:$('maxAssetsLabel'),planBtn:$('planBtn'),clearBtn:$('clearBtn'),deepseekKey:$('deepseekKey'),meshyKey:$('meshyKey'),qwenKey:$('qwenKey'),trace:$('trace'),storyBlock:$('storyBlock'),shots:$('shots'),assetsPlan:$('assetsPlan'),approveAllBtn:$('approveAllBtn'),approvePlanBtn:$('approvePlanBtn'),startBtn:$('startBtn'),jobs:$('jobs'),inventory:$('inventory'),uploadInput:$('uploadInput'),approvalStatus:$('approvalStatus'),detail:$('detail'),contextJson:$('contextJson'),globalText:$('globalText'),globalBar:$('globalBar'),toast:$('toast')};
 const ROUTES={qwen_image:'Qwen Image',meshy_text_3d:'Meshy Text→3D',qwen_to_meshy_3d:'Qwen Image → Meshy 3D',use_uploaded:'使用已上传资产',skip:'跳过'};
 const session={get:k=>sessionStorage.getItem(k)||'',set:(k,v)=>v?sessionStorage.setItem(k,v):sessionStorage.removeItem(k)};
-ui.deepseekKey.value=session.get('sf3_deepseek');ui.meshyKey.value=session.get('sf3_meshy');ui.qwenKey.value=session.get('sf3_qwen');ui.workspaceId.value=session.get('sf3_workspace');ui.qwenRegion.value=session.get('sf3_region')||'ap-northeast-1';
-for(const [el,key] of [[ui.deepseekKey,'sf3_deepseek'],[ui.meshyKey,'sf3_meshy'],[ui.qwenKey,'sf3_qwen'],[ui.workspaceId,'sf3_workspace'],[ui.qwenRegion,'sf3_region']])el.addEventListener('change',()=>session.set(key,el.value.trim()));
+ui.deepseekKey.value=session.get('sf3_deepseek');ui.meshyKey.value=session.get('sf3_meshy');ui.qwenKey.value=session.get('sf3_qwen');
+for(const [el,key] of [[ui.deepseekKey,'sf3_deepseek'],[ui.meshyKey,'sf3_meshy'],[ui.qwenKey,'sf3_qwen']])el.addEventListener('change',()=>session.set(key,el.value.trim()));
 ui.maxAssets.oninput=()=>ui.maxAssetsLabel.textContent=ui.maxAssets.value;
 
 let storyAnalysis=null,shotPlan=null,projectPlan=null,planApproved=false,history=[],jobs=[],inventory=[],lastSelected=null,planningBusy=false,generationBusy=false;
@@ -114,9 +110,18 @@ function newJob(asset){return{id:uid('job'),assetId:asset.id,name:asset.name,rou
 function renderJobs(){ui.jobs.innerHTML=jobs.length?jobs.map(j=>`<div class="job"><div class="jobHead"><b>${esc(j.name)}</b><span>${esc(ROUTES[j.route]||j.route)}</span></div><div class="progressWrap"><div class="progressBar" style="width:${j.progress}%"></div></div><div class="jobStatus ${j.status==='failed'?'badText':j.status==='completed'?'goodText':''}">${esc(j.message)} · ${j.progress}%</div>${j.output?.url?`<div class="actions"><button data-download-job="${j.id}">下载结果</button></div>`:''}</div>`).join(''):'<div class="empty">还没有生成任务。</div>';ui.jobs.querySelectorAll('[data-download-job]').forEach(b=>b.onclick=()=>downloadRemote(jobs.find(j=>j.id===b.dataset.downloadJob)?.output?.url,jobs.find(j=>j.id===b.dataset.downloadJob)?.output?.filename||'asset'))}
 function setJob(job,progress,message,status=job.status){job.progress=clamp(progress,0,100);job.message=message;job.status=status;renderJobs();setGlobal()}
 
-function qwenEndpoint(){const ws=ui.workspaceId.value.trim();if(!ws)throw new Error('请填写 Alibaba Model Studio Workspace ID');const region=ui.qwenRegion.value;return `https://${ws}.${region}.maas.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation`}
-async function qwenImage(prompt,job,base=0,span=100){const key=ui.qwenKey.value.trim();if(!key)throw new Error('请填写 Alibaba Model Studio API Key');session.set('sf3_qwen',key);session.set('sf3_workspace',ui.workspaceId.value.trim());session.set('sf3_region',ui.qwenRegion.value);setJob(job,base+span*.12,'Qwen Image 请求已发送','generating');let fake=base+span*.12;const timer=setInterval(()=>{fake=Math.min(base+span*.78,fake+span*.04);setJob(job,fake,'Qwen Image 正在生成','generating')},900);try{const r=await fetch(qwenEndpoint(),{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:'qwen-image-3.0-pro',input:{messages:[{role:'user',content:[{text:prompt}]}]},parameters:{prompt_extend:true,watermark:false,size:'1024*1024',n:1}})});if(!r.ok)throw new Error(`Qwen ${r.status}: ${(await r.text()).slice(0,500)}`);const j=await r.json();const url=j.output?.choices?.[0]?.message?.content?.find(x=>x.image)?.image;if(!url)throw new Error('Qwen 返回中没有图片 URL');clearInterval(timer);setJob(job,base+span,'Qwen Image 完成','generating');return{url,filename:`${job.assetId}.png`,provider:'qwen-image-3.0-pro',raw:j}}finally{clearInterval(timer)}}
-
+function qwenEndpoint(){return 'https://dashscope.aliyuncs.com/compatible-mode/v1/images/generations'}
+async function qwenImage(prompt,job,base=0,span=100){
+  const key=ui.qwenKey.value.trim();if(!key)throw new Error('请填写千问AI平台 API Key（sk-ws-...）');
+  session.set('sf3_qwen',key);setJob(job,base+span*.12,'Qwen Image 请求已发送','generating');
+  let fake=base+span*.12;const timer=setInterval(()=>{fake=Math.min(base+span*.82,fake+span*.035);setJob(job,fake,'Qwen Image 正在生成','generating')},900);
+  try{
+    const r=await fetch(qwenEndpoint(),{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:'qwen-image-3.0-pro',prompt,size:'1024x1024',n:1,prompt_extend:true,prompt_extend_mode:'direct',enable_thinking:true,watermark:false})});
+    if(!r.ok)throw new Error(`Qwen ${r.status}: ${(await r.text()).slice(0,500)}`);
+    const j=await r.json();const url=j.data?.[0]?.url;if(!url)throw new Error('Qwen 返回中没有图片 URL');
+    clearInterval(timer);setJob(job,base+span,'Qwen Image 完成','generating');return{url,filename:`${job.assetId}.png`,provider:'qwen-image-3.0-pro',raw:j};
+  }finally{clearInterval(timer)}
+}
 async function meshyCreate(path,body){const key=ui.meshyKey.value.trim();if(!key)throw new Error('请填写 Meshy API Key');session.set('sf3_meshy',key);const r=await fetch(`https://api.meshy.ai${path}`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify(body)});if(!r.ok)throw new Error(`Meshy ${r.status}: ${(await r.text()).slice(0,500)}`);return r.json()}
 async function meshyPoll(path,id,job,base,span,label){const key=ui.meshyKey.value.trim();for(let i=0;i<240;i++){const r=await fetch(`https://api.meshy.ai${path}/${id}`,{headers:{'Authorization':`Bearer ${key}`}});if(!r.ok)throw new Error(`Meshy status ${r.status}: ${(await r.text()).slice(0,300)}`);const j=await r.json();const p=Number.isFinite(Number(j.progress))?Number(j.progress):j.status==='PENDING'?5:50;setJob(job,base+span*(p/100),`${label} · ${j.status||''}`,'generating');if(j.status==='SUCCEEDED')return j;if(['FAILED','CANCELED'].includes(j.status))throw new Error(j.task_error?.message||`${label} 失败`);await sleep(1800)}throw new Error(`${label} 等待超时`)}
 async function meshyText3D(asset,job){setJob(job,5,'创建 Meshy 3D Preview','generating');const preview=await meshyCreate('/openapi/v2/text-to-3d',{mode:'preview',prompt:asset.prompt||asset.description||asset.name,ai_model:'latest',target_formats:['glb'],should_remesh:false,...(String(asset.role||'').includes('character')?{pose_mode:'a-pose'}:{})});const previewId=preview.result;if(!previewId)throw new Error('Meshy Preview 没有返回 task id');const pj=await meshyPoll('/openapi/v2/text-to-3d',previewId,job,8,42,'Meshy Preview');setJob(job,52,'创建 Meshy Refine','generating');const refine=await meshyCreate('/openapi/v2/text-to-3d',{mode:'refine',preview_task_id:previewId,enable_pbr:true,target_formats:['glb'],auto_size:true});const refineId=refine.result;if(!refineId)throw new Error('Meshy Refine 没有返回 task id');const rj=await meshyPoll('/openapi/v2/text-to-3d',refineId,job,55,44,'Meshy Refine');const url=rj.model_urls?.glb;if(!url)throw new Error('Meshy 任务成功但没有 GLB URL');return{url,filename:`${asset.id}.glb`,thumbnail:rj.thumbnail_url,provider:'meshy-text-to-3d',raw:rj}}
