@@ -46,3 +46,5 @@ jobs:
           git add sceneforge-animate/phase151.html
           git commit -m 'Add SceneForge Animate Phase 1.5.1 full-context text feedback'
           git push origin sceneforge-v3
+
+# Triggered after workflow registration.
