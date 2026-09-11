@@ -42,3 +42,4 @@ jobs:
           git add sceneforge-animate/phase3.html
           git commit -m 'Fix Phase 3.0.2 Qwen CORS via proxy'
           git push origin sceneforge-v3
+# retry 2
