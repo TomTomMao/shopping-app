@@ -1,0 +1,47 @@
+name: Build SceneForge Animate Phase 1.4
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase14.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+
+      - name: Build Phase 1.4
+        run: python sceneforge-animate/build_phase14.py
+
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase14.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase14.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase14.mjs
+
+      - name: Sanity checks
+        run: |
+          grep -q 'MODEL_FORWARD_OFFSET' sceneforge-animate/phase14.html
+          grep -q 'faceTarget' sceneforge-animate/phase14.html
+          grep -q 'orientationDiagnostics' sceneforge-animate/phase14.html
+          grep -q 'moveFacingDot' sceneforge-animate/phase14.html
+
+      - name: Commit Phase 1.4
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase14.html
+          git commit -m 'Add SceneForge Animate Phase 1.4 orientation-aware runtime'
+          git push origin sceneforge-v3
