@@ -35,6 +35,7 @@ jobs:
           grep -q "extractFeedbackVideoFrames" sceneforge-animate/phase15.html
           grep -q "reviewUserVideo" sceneforge-animate/phase15.html
           grep -q "清除上下文" sceneforge-animate/phase15.html
+          grep -q "上传反馈视频" sceneforge-animate/phase15.html
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
