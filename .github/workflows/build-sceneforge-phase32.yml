@@ -5,6 +5,7 @@ on:
     branches: [sceneforge-v3]
     paths:
       - 'sceneforge-animate/build_phase32.py'
+      - 'server/app.py'
       - '.github/workflows/build-sceneforge-phase32.yml'
   workflow_dispatch:
 
@@ -27,18 +28,22 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re, subprocess, tempfile
+          import re, subprocess
           p=Path('sceneforge-animate/phase32.html')
           s=p.read_text(encoding='utf-8')
           for marker in ['Phase 3.2','动画预览','buildAnimation32','ANIM_DIRECTOR32','runtimeUrl32']:
               assert marker in s, marker
           scripts=re.findall(r'<script type="module">(.*?)</script>',s,re.S)
           assert scripts
-          js=scripts[-1]
-          q=Path('/tmp/phase32.mjs');q.write_text(js,encoding='utf-8')
+          q=Path('/tmp/phase32.mjs');q.write_text(scripts[-1],encoding='utf-8')
           subprocess.run(['node','--check',str(q)],check=True)
           print('phase32 checks passed')
           PY
+      - name: Validate local server
+        run: |
+          python -m py_compile server/app.py
+          grep -q '/asset-proxy' server/app.py
+          grep -q 'phase32.html' server/app.py
       - name: Commit generated page
         run: |
           git config user.name 'github-actions[bot]'
