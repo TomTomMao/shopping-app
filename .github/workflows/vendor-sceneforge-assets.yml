@@ -1,0 +1,49 @@
+name: Vendor SceneForge Animate assets
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/vendor-sceneforge-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+
+      - name: Download test GLB assets into repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sceneforge-animate/assets
+          curl -fL --retry 3 \
+            'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb' \
+            -o sceneforge-animate/assets/RobotExpressive.glb
+          curl -fL --retry 3 \
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb' \
+            -o sceneforge-animate/assets/Fox.glb
+          test -s sceneforge-animate/assets/RobotExpressive.glb
+          test -s sceneforge-animate/assets/Fox.glb
+          file sceneforge-animate/assets/*.glb
+
+      - name: Commit vendored assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/assets/RobotExpressive.glb sceneforge-animate/assets/Fox.glb
+          if git diff --cached --quiet; then
+            echo 'Assets already vendored.'
+            exit 0
+          fi
+          git commit -m 'Vendor SceneForge Animate test GLB assets'
+          git push origin HEAD:sceneforge-v3
