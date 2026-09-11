@@ -1,0 +1,44 @@
+name: Build SceneForge Animate Phase 1.5
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase15.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Build page
+        run: python sceneforge-animate/build_phase15.py
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase15.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase15.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase15.mjs
+      - name: Sanity checks
+        run: |
+          grep -q "用户视频反馈" sceneforge-animate/phase15.html
+          grep -q "setFeedbackTab" sceneforge-animate/phase15.html
+          grep -q "extractFeedbackVideoFrames" sceneforge-animate/phase15.html
+          grep -q "reviewUserVideo" sceneforge-animate/phase15.html
+          grep -q "清除上下文" sceneforge-animate/phase15.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase15.html
+          git commit -m 'Add SceneForge Animate Phase 1.5 user video feedback'
+          git push origin sceneforge-v3
