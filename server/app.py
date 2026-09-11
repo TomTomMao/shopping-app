@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
 from typing import Any
+from urllib.request import getproxies
 
 import httpx
 from dotenv import load_dotenv
@@ -18,7 +20,7 @@ DEEPSEEK_BASE = "https://api.deepseek.com"
 MESHY_BASE = "https://api.meshy.ai"
 QWEN_ENDPOINT = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
 
-app = FastAPI(title="SceneForge Local Server", version="3.0.3")
+app = FastAPI(title="SceneForge Local Server", version="3.0.4")
 app.mount("/sceneforge-animate", StaticFiles(directory=SCENEFORGE_DIR), name="sceneforge-animate")
 
 
@@ -34,21 +36,66 @@ def filtered_headers(headers: dict[str, str]) -> dict[str, str]:
     return {k: v for k, v in headers.items() if k.lower() not in blocked}
 
 
+def detected_proxy() -> str | None:
+    explicit = (
+        os.getenv("SCENEFORGE_PROXY", "").strip()
+        or os.getenv("HTTPS_PROXY", "").strip()
+        or os.getenv("https_proxy", "").strip()
+        or os.getenv("HTTP_PROXY", "").strip()
+        or os.getenv("http_proxy", "").strip()
+    )
+    if explicit:
+        return explicit
+    proxies = getproxies()
+    return proxies.get("https") or proxies.get("http")
+
+
+def exc_detail(exc: BaseException) -> str:
+    return f"{type(exc).__name__}: {exc!r}"
+
+
+async def request_upstream(method: str, url: str, *, headers: dict[str, str] | None = None, content: bytes | None = None, params: Any = None, json: Any = None, timeout: float = 180.0) -> httpx.Response:
+    proxy = detected_proxy()
+    attempts: list[tuple[str, str | None]] = []
+    if proxy:
+        attempts.append(("system-proxy", proxy))
+    attempts.append(("direct", None))
+
+    errors: list[str] = []
+    for label, proxy_url in attempts:
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(timeout, connect=30.0),
+                follow_redirects=True,
+                proxy=proxy_url,
+                trust_env=False,
+            ) as client:
+                return await client.request(method, url, headers=headers, content=content, params=params, json=json)
+        except httpx.HTTPError as exc:
+            errors.append(f"{label}={exc_detail(exc)}")
+
+    raise HTTPException(
+        status_code=502,
+        detail={
+            "message": "All outbound connection attempts failed",
+            "target": url,
+            "proxy_detected": proxy or None,
+            "attempts": errors,
+        },
+    )
+
+
 async def forward(request: Request, upstream_url: str, auth_key: str) -> Response:
     body = await request.body()
     headers = filtered_headers(dict(request.headers))
     headers["Authorization"] = f"Bearer {auth_key}"
-    async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0), follow_redirects=True) as client:
-        try:
-            result = await client.request(
-                request.method,
-                upstream_url,
-                params=request.query_params,
-                headers=headers,
-                content=body or None,
-            )
-        except httpx.HTTPError as exc:
-            raise HTTPException(status_code=502, detail=f"Upstream connection failed: {exc}") from exc
+    result = await request_upstream(
+        request.method,
+        upstream_url,
+        params=request.query_params,
+        headers=headers,
+        content=body or None,
+    )
     media_type = result.headers.get("content-type", "application/json").split(";", 1)[0]
     return Response(content=result.content, status_code=result.status_code, media_type=media_type)
 
@@ -86,10 +133,10 @@ LOCAL_SHIM = r'''
       el.title = 'Local mode: configured in server/.env';
     }
     const brand = document.querySelector('.brand');
-    if (brand) brand.textContent = 'SceneForge Animate · Phase 3.0.3 Local';
+    if (brand) brand.textContent = 'SceneForge Animate · Phase 3.0.4 Local';
     const apiCard = [...document.querySelectorAll('.card')].find(x => x.querySelector('h3')?.textContent === 'API 设置');
     const hint = apiCard?.querySelector('.hint');
-    if (hint) hint.textContent = '本地模式：API Key 由 server/.env 管理，浏览器不会直接保存供应商密钥。';
+    if (hint) hint.textContent = '本地模式：API Key 由 server/.env 管理；服务端会自动尝试 Windows 系统代理并在失败时回退直连。';
   });
 })();
 </script>
@@ -109,6 +156,7 @@ async def index() -> HTMLResponse:
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
+    proxy = detected_proxy()
     return {
         "ok": True,
         "service": "sceneforge-local",
@@ -117,7 +165,32 @@ async def health() -> dict[str, Any]:
             "qwen": bool(os.getenv("QWEN_API_KEY", "").strip()),
             "meshy": bool(os.getenv("MESHY_API_KEY", "").strip()),
         },
+        "network": {
+            "proxy_detected": proxy,
+        },
     }
+
+
+@app.get("/network-check")
+async def network_check() -> dict[str, Any]:
+    targets = {
+        "deepseek": "https://api.deepseek.com/models",
+        "qwen": "https://dashscope.aliyuncs.com/",
+        "meshy": "https://api.meshy.ai/",
+    }
+    out: dict[str, Any] = {"proxy_detected": detected_proxy(), "dns": {}, "https": {}}
+    for name, url in targets.items():
+        host = url.split("//", 1)[1].split("/", 1)[0]
+        try:
+            out["dns"][name] = socket.gethostbyname(host)
+        except Exception as exc:
+            out["dns"][name] = exc_detail(exc)
+        try:
+            r = await request_upstream("GET", url, timeout=20.0)
+            out["https"][name] = {"status": r.status_code}
+        except HTTPException as exc:
+            out["https"][name] = exc.detail
+    return out
 
 
 @app.api_route("/api/deepseek/{path:path}", methods=["GET", "POST"])
@@ -143,13 +216,11 @@ async def verify_qwen() -> JSONResponse:
         "input": {"messages": [{"role": "user", "content": []}]},
         "parameters": {"prompt_extend": False},
     }
-    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=20.0)) as client:
-        try:
-            result = await client.post(
-                QWEN_ENDPOINT,
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-                json=payload,
-            )
-        except httpx.HTTPError as exc:
-            raise HTTPException(status_code=502, detail=f"Qwen connection failed: {exc}") from exc
+    result = await request_upstream(
+        "POST",
+        QWEN_ENDPOINT,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+        json=payload,
+        timeout=60.0,
+    )
     return JSONResponse({"upstream_status": result.status_code, "upstream_body": result.text[:1000]})
