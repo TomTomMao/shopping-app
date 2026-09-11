@@ -1,0 +1,41 @@
+name: Test SceneForge Local
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - 'server/**'
+      - 'run.bat'
+      - 'run.sh'
+      - 'sceneforge-animate/phase3.html'
+      - '.github/workflows/test-sceneforge-local.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r server/requirements.txt
+      - name: Compile server
+        run: python -m py_compile server/app.py
+      - name: Import and validate routes
+        env:
+          DEEPSEEK_API_KEY: test-deepseek
+          QWEN_API_KEY: sk-ws-test-qwen
+          MESHY_API_KEY: test-meshy
+        run: |
+          python - <<'PY'
+          from server.app import app, LOCAL_SHIM
+          paths = {r.path for r in app.routes}
+          required = {'/', '/health', '/qwen-image', '/verify-qwen', '/api/deepseek/{path:path}', '/api/meshy/{path:path}'}
+          missing = required - paths
+          assert not missing, missing
+          assert 'local-backend-managed' in LOCAL_SHIM
+          assert "api.deepseek.com" in LOCAL_SHIM
+          assert "api.meshy.ai" in LOCAL_SHIM
+          print('SceneForge local server smoke test passed')
+          PY
