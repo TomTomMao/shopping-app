@@ -44,3 +44,4 @@ jobs:
           git add sceneforge-animate/phase3.html
           git commit -m 'Fix Phase 3.0.1 Qwen API and add provider validation'
           git push origin sceneforge-v3
+# trigger
