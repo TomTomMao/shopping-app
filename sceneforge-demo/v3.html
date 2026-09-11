@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>SceneForge GLB City v3</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#090b10;color:#eef2ff}body{overflow:hidden}#app{display:grid;grid-template-columns:300px 1fr;height:100%}aside{background:#11151d;border-right:1px solid #293244;padding:14px;overflow:auto}.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px}.tag{font-size:10px;padding:3px 6px;border-radius:999px;background:#2d3f71;color:#b8c8ff}.sub{color:#93a0b5;font-size:12px;margin:5px 0 15px}.card{background:#171d28;border:1px solid #293244;border-radius:14px;padding:12px;margin-bottom:12px}label{display:block;color:#a8b3c5;font-size:12px;margin-bottom:7px}textarea{width:100%;height:90px;resize:none;background:#0c1119;border:1px solid #33415b;border-radius:10px;color:white;padding:10px;outline:none}button{border:1px solid #384660;background:#1e2737;color:white;border-radius:10px;padding:9px 10px;cursor:pointer}.primary{width:100%;margin-top:9px;border:0;background:linear-gradient(135deg,#6f8cff,#9b6cff);font-weight:700}.row{display:flex;gap:7px}.row button{flex:1}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:11px;border:1px solid #35435d;border-radius:999px;padding:5px 7px;color:#b7c2d5;cursor:pointer}.hint{font-size:12px;color:#93a0b5;line-height:1.5}.stage{position:relative;min-width:0}.topbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;background:#0b0f16cc;border:1px solid #35415a;border-radius:12px;padding:7px;display:flex;gap:7px;backdrop-filter:blur(10px)}.status{position:absolute;bottom:10px;left:10px;z-index:3;background:#0b0f16dd;border:1px solid #35415a;border-radius:10px;padding:8px 10px;font-size:12px;max-width:calc(100% - 20px)}.ok{color:#8ce4a5}.err{color:#ff9aa5}.credit{font-size:10px;color:#748197;margin-top:8px}canvas{display:block;width:100%;height:100%}
+@media(max-width:700px){#app{grid-template-columns:1fr;grid-template-rows:238px 1fr}aside{border-right:0;border-bottom:1px solid #293244;padding:10px}.card:nth-of-type(n+2){display:none}.brand{font-size:18px}.sub{margin-bottom:8px}.topbar button{padding:7px 8px;font-size:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+<aside>
+<div class="brand">SceneForge <span class="tag">GLB CITY v3</span></div>
+<div class="sub">Three.js · 真实 3D 素材版</div>
+<div class="card">
+<label>描述场景</label>
+<textarea id="prompt">现代商业城市，有真实建筑、十字路口和树</textarea>
+<div class="chips"><span class="chip" data-p="现代商业城市，有真实建筑、十字路口和树">现代城市</span><span class="chip" data-p="赛博朋克城市，有霓虹灯、真实建筑和道路">赛博城市</span></div>
+<button id="gen" class="primary">✨ 重新生成</button>
+<div class="credit">建筑/树木素材：Quaternius CC0</div>
+</div>
+<div class="card"><div class="hint">拖动旋转视角，双指缩放。点击建筑后可用顶部按钮移动、旋转、缩放。</div></div>
+</aside>
+<main id="stage" class="stage">
+<div class="topbar"><button id="move">移动</button><button id="rotate">旋转</button><button id="scale">缩放</button><button id="focus">聚焦</button></div>
+<div id="status" class="status">正在加载真实 GLB 建筑…</div>
+</main>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {TransformControls} from 'three/addons/controls/TransformControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+const stage=document.getElementById('stage');
+const statusEl=document.getElementById('status');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0a0d13);
+scene.fog=new THREE.Fog(0x0a0d13,35,100);
+const camera=new THREE.PerspectiveCamera(52,1,.1,400);
+camera.position.set(19,13,22);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.shadowMap.enabled=true;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+stage.appendChild(renderer.domElement);
+const orbit=new OrbitControls(camera,renderer.domElement);
+orbit.enableDamping=true;orbit.target.set(0,3,0);orbit.maxPolarAngle=Math.PI*.49;orbit.minDistance=4;orbit.maxDistance=90;
+const transform=new TransformControls(camera,renderer.domElement);
+scene.add(transform.getHelper());
+transform.addEventListener('dragging-changed',e=>orbit.enabled=!e.value);
+scene.add(new THREE.HemisphereLight(0xb6c7ff,0x241d14,1.8));
+const sun=new THREE.DirectionalLight(0xfff0d6,3.8);sun.position.set(16,22,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+const blue=new THREE.DirectionalLight(0x6889ff,1.0);blue.position.set(-15,10,-10);scene.add(blue);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x171c24,roughness:1}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const root=new THREE.Group();scene.add(root);
+const loader=new GLTFLoader();
+const templates={};
+let selected=null;
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+const BASE='https://cdn.jsdelivr.net/gh/anshaneja5/skyline-run@main/public/assets/models/';
+const files={small:'b_small.glb',medium:'b_medium.glb',large:'b_large.glb',tree1:'tree1.glb',tree2:'tree2.glb',tree3:'tree3.glb'};
+
+function setStatus(text,type=''){statusEl.className='status '+type;statusEl.textContent=text}
+function addBox(name,color,pos,scale,emissive=null){const mat=new THREE.MeshStandardMaterial({color,roughness:.82,metalness:.08});if(emissive){mat.emissive=new THREE.Color(emissive);mat.emissiveIntensity=3.5}const m=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),mat);m.name=name;m.position.set(...pos);m.scale.set(...scale);m.castShadow=m.receiveShadow=true;m.userData.assetRoot=true;root.add(m);return m}
+function clearRoot(){transform.detach();selected=null;while(root.children.length)root.remove(root.children[0])}
+function normalizeTemplate(sceneObj){const box=new THREE.Box3().setFromObject(sceneObj);const size=box.getSize(new THREE.Vector3());sceneObj.scale.multiplyScalar(1/Math.max(size.y,.001));const box2=new THREE.Box3().setFromObject(sceneObj);const c=box2.getCenter(new THREE.Vector3());sceneObj.position.x-=c.x;sceneObj.position.z-=c.z;sceneObj.position.y-=box2.min.y;sceneObj.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});const holder=new THREE.Group();holder.add(sceneObj);return holder}
+async function preload(){let loaded=0;for(const [key,file] of Object.entries(files)){try{const gltf=await loader.loadAsync(BASE+file);templates[key]=normalizeTemplate(gltf.scene);loaded++;setStatus(`正在加载真实 GLB 素材… ${loaded}/${Object.keys(files).length}`)}catch(err){console.error('asset load failed',key,err)}}if(!templates.small&&!templates.medium&&!templates.large)throw new Error('建筑 GLB 全部加载失败')}
+function cloneAsset(key,height,x,z,rot=0){const t=templates[key];if(!t)return addBox('fallback','#59657a',[x,height/2,z],[height*.4,height,height*.4]);const g=t.clone(true);g.name='Building '+key;g.scale.setScalar(height);g.position.set(x,0,z);g.rotation.y=rot;g.userData.assetRoot=true;g.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});root.add(g);return g}
+function cloneTree(x,z,h){const keys=['tree1','tree2','tree3'].filter(k=>templates[k]);if(!keys.length)return;const t=templates[keys[Math.floor(Math.random()*keys.length)]];const g=t.clone(true);g.name='Tree';g.scale.setScalar(h);g.position.set(x,0,z);g.rotation.y=Math.random()*Math.PI*2;g.userData.assetRoot=true;root.add(g)}
+function makeRoads(){addBox('road','#202630',[0,.04,0],[5.3,.08,40]);addBox('road','#202630',[0,.04,0],[40,.08,5.3]);addBox('sidewalk','#73787f',[-4.15,.09,0],[2.7,.18,40]);addBox('sidewalk','#73787f',[4.15,.09,0],[2.7,.18,40]);addBox('sidewalk','#73787f',[0,.09,-4.15],[40,.18,2.7]);addBox('sidewalk','#73787f',[0,.09,4.15],[40,.18,2.7]);for(let i=-6;i<=6;i++){if(i===0)continue;addBox('mark','#f1db88',[0,.1,i*3],[.1,.025,1.4]);addBox('mark','#f1db88',[i*3,.1,0],[1.4,.025,.1])}}
+function fit(){const box=new THREE.Box3().setFromObject(root);if(box.isEmpty())return;const size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());const d=Math.max(size.x,size.y,size.z)*.62+5;camera.position.set(c.x+d*.75,c.y+Math.min(15,d*.5),c.z+d*.85);orbit.target.copy(c);orbit.update()}
+async function buildCity(prompt){clearRoot();makeRoads();const cyber=/赛博|cyber|霓虹|neon/i.test(prompt);const spots=[[-8,-15,5,'small'],[-13,-10,8,'medium'],[-9,-3,11,'large'],[-13,9,6.5,'small'],[-8,15,9,'medium'],[8,-15,8.5,'medium'],[13,-10,5.5,'small'],[9,-3,12,'large'],[13,9,8.5,'medium'],[8,15,5.5,'small']];spots.forEach(([x,z,h,k],i)=>{cloneAsset(k,h,x,z,x<0?Math.PI/2:-Math.PI/2);if(cyber){const colors=['#ff3fa4','#27e2ff','#9967ff','#ffd45a'];addBox('neon',colors[i%4],[x+(x<0?1.4:-1.4),Math.min(h*.55,4.8),z],[.08,.28,.75],colors[i%4])}});for(let z=-16;z<=16;z+=4.8){cloneTree(-5.3,z,1.7+Math.random()*.45);cloneTree(5.3,z+.7,1.7+Math.random()*.45)}fit();setStatus(`GLB CITY v3：${spots.length} 栋真实建筑已加载`, 'ok')}
+function findRoot(obj){let o=obj;while(o&&o!==root){if(o.userData?.assetRoot)return o;o=o.parent}return null}
+renderer.domElement.addEventListener('pointerdown',e=>{if(transform.axis)return;const rect=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(root.children,true);selected=hits.length?findRoot(hits[0].object):null;transform.detach();if(selected)transform.attach(selected)});
+document.getElementById('move').onclick=()=>transform.setMode('translate');document.getElementById('rotate').onclick=()=>transform.setMode('rotate');document.getElementById('scale').onclick=()=>transform.setMode('scale');document.getElementById('focus').onclick=fit;
+document.getElementById('gen').onclick=()=>buildCity(document.getElementById('prompt').value);document.querySelectorAll('.chip').forEach(el=>el.onclick=()=>{document.getElementById('prompt').value=el.dataset.p;buildCity(el.dataset.p)});
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;camera.aspect=w/Math.max(h,1);camera.updateProjectionMatrix();renderer.setSize(w,h,false)}new ResizeObserver(resize).observe(stage);resize();
+(function loop(){requestAnimationFrame(loop);orbit.update();renderer.render(scene,camera)})();
+try{await preload();await buildCity(document.getElementById('prompt').value)}catch(err){console.error(err);setStatus('真实建筑加载失败：'+err.message,'err');makeRoads();fit()}
+</script>
+</body>
+</html>
