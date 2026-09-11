@@ -1,0 +1,39 @@
+name: Check SceneForge Phase 3
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/check-sceneforge-phase3.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Extract module
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase3.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase3.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+      - name: JavaScript syntax check
+        run: node --check /tmp/phase3.mjs
+      - name: Sanity checks
+        run: |
+          grep -q "qwen-image-3.0-pro" sceneforge-animate/phase3.html
+          grep -q "/openapi/v2/text-to-3d" sceneforge-animate/phase3.html
+          grep -q "/openapi/v1/image-to-3d" sceneforge-animate/phase3.html
+          grep -q "批准计划" sceneforge-animate/phase3.html
+          grep -q "总体进度" sceneforge-animate/phase3.html
+          grep -q "uploadInput" sceneforge-animate/phase3.html
+          grep -q "deepseek-v4-flash-vision-exp" sceneforge-animate/phase3.html
+          grep -q "downloadRemote" sceneforge-animate/phase3.html
