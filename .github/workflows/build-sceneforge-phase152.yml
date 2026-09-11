@@ -1,0 +1,45 @@
+name: Build SceneForge Animate Phase 1.5.2
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/build-sceneforge-phase152.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+      - name: Build page
+        run: python sceneforge-animate/build_phase152.py
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('sceneforge-animate/phase152.html').read_text(encoding='utf-8')
+          a=s.index('<script type="module">')+len('<script type="module">')
+          b=s.index('</script>',a)
+          Path('/tmp/phase152.mjs').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/phase152.mjs
+      - name: Sanity checks
+        run: |
+          grep -q "visualPivot" sceneforge-animate/phase152.html
+          grep -q "Walking:Math.PI" sceneforge-animate/phase152.html
+          grep -q "Running:0" sceneforge-animate/phase152.html
+          grep -q "runtime_patch" sceneforge-animate/phase152.html
+          grep -q "clipYawCorrection" sceneforge-animate/phase152.html
+          grep -q "pendingRuntimePatch" sceneforge-animate/phase152.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/phase152.html
+          git commit -m 'Add SceneForge Animate Phase 1.5.2 runtime facing calibration'
+          git push origin sceneforge-v3
