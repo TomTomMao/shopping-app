@@ -1,0 +1,79 @@
+name: Fix SceneForge Animate syntax
+
+on:
+  push:
+    branches: [sceneforge-v3]
+    paths:
+      - '.github/workflows/fix-sceneforge-animate-syntax.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sceneforge-v3
+
+      - name: Replace malformed tool schema
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('sceneforge-animate/index.html')
+          s = p.read_text(encoding='utf-8')
+          start = s.index('const TOOLS=[')
+          end = s.index('\nfunction runtimeContext()', start)
+          fixed = r'''const TOOLS=[
+ {type:'function',function:{
+   name:'inspect_runtime',
+   description:'Read latest runtime capabilities, current storyboard/project, available local GLB assets and hard asset limit. Must be called first on each user turn.',
+   parameters:{type:'object',properties:{},additionalProperties:false}
+ }},
+ {type:'function',function:{
+   name:'set_storyboard',
+   description:'Set the visual storyboard before compiling the animation project.',
+   parameters:{
+     type:'object',
+     required:['title','summary','duration','shots'],
+     properties:{
+       title:{type:'string'},
+       summary:{type:'string'},
+       duration:{type:'number'},
+       shots:{type:'array',items:{type:'object'}}
+     }
+   }
+ }},
+ {type:'function',function:{
+   name:'set_animation_project',
+   description:'Compile the complete deterministic animation project. Calling this rebuilds the Three.js scene.',
+   parameters:{
+     type:'object',
+     required:['project'],
+     properties:{project:{type:'object'}}
+   }
+ }}
+];'''
+          p.write_text(s[:start] + fixed + s[end:], encoding='utf-8')
+          PY
+
+      - name: Syntax check module JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('sceneforge-animate/index.html').read_text(encoding='utf-8')
+          start = s.index('<script type="module">') + len('<script type="module">')
+          end = s.index('</script>', start)
+          Path('/tmp/sceneforge-app.mjs').write_text(s[start:end], encoding='utf-8')
+          PY
+          node --check /tmp/sceneforge-app.mjs
+
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sceneforge-animate/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Fix SceneForge Animate JavaScript syntax'
+          git push origin sceneforge-v3
