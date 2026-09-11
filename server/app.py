@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import Any
 
 import httpx
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parents[1]
 SCENEFORGE_DIR = ROOT / "sceneforge-animate"
+load_dotenv(ROOT / "server" / ".env")
 
 DEEPSEEK_BASE = "https://api.deepseek.com"
 MESHY_BASE = "https://api.meshy.ai"
@@ -24,7 +25,7 @@ app.mount("/sceneforge-animate", StaticFiles(directory=SCENEFORGE_DIR), name="sc
 def env_key(name: str) -> str:
     value = os.getenv(name, "").strip()
     if not value:
-        raise HTTPException(status_code=503, detail=f"Missing {name} in .env")
+        raise HTTPException(status_code=503, detail=f"Missing {name} in server/.env")
     return value
 
 
@@ -55,7 +56,6 @@ async def forward(request: Request, upstream_url: str, auth_key: str) -> Respons
 LOCAL_SHIM = r'''
 <script>
 (() => {
-  // The existing Phase 3 UI keeps its provider-aware workflow, while localhost owns all secrets.
   sessionStorage.setItem('sf3_deepseek', 'local-backend-managed');
   sessionStorage.setItem('sf3_meshy', 'local-backend-managed');
   sessionStorage.setItem('sf3_qwen', 'sk-ws-local-backend-managed');
@@ -83,11 +83,12 @@ LOCAL_SHIM = r'''
       const el = document.getElementById(id);
       if (!el) continue;
       el.disabled = true;
-      el.title = 'Local mode: configured in .env';
+      el.title = 'Local mode: configured in server/.env';
     }
     const brand = document.querySelector('.brand');
     if (brand) brand.textContent = 'SceneForge Animate · Phase 3.0.3 Local';
-    const hint = document.querySelector('.card:nth-of-type(2) .hint');
+    const apiCard = [...document.querySelectorAll('.card')].find(x => x.querySelector('h3')?.textContent === 'API 设置');
+    const hint = apiCard?.querySelector('.hint');
     if (hint) hint.textContent = '本地模式：API Key 由 server/.env 管理，浏览器不会直接保存供应商密钥。';
   });
 })();
