@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SceneForge Animate · Phase 3.2</title>
+<style>
+:root{color-scheme:dark;--bg:#070a10;--panel:#101622;--card:#151d2a;--line:#2a3850;--text:#eef3ff;--muted:#91a1ba;--good:#86e2a4;--warn:#ffd27a;--bad:#ff919d;--blue:#7594ff;--purple:#9c75ff}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}body{overflow:hidden}button,input,textarea,select{font:inherit}button{cursor:pointer;color:#fff;background:#1b2638;border:1px solid #3a4964;border-radius:9px;padding:8px 10px}button:hover{filter:brightness(1.08)}button:disabled{opacity:.45;cursor:not-allowed}.primary{border:0;background:linear-gradient(135deg,#6e8cff,#955fff);font-weight:750}.goodBtn{background:#173c2b;border-color:#397453}.danger{background:#3a1e27;border-color:#6f3544}.app{height:100%;display:grid;grid-template-columns:360px minmax(640px,1fr) 420px}.left,.right{background:var(--panel);padding:13px;overflow:auto}.left{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}.brand{font-size:21px;font-weight:850}.sub{font-size:11px;color:var(--muted);line-height:1.5;margin:5px 0 12px}.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px;margin-bottom:10px}.card h3{font-size:12px;margin:0 0 9px}.field{margin-bottom:8px}.field label{display:flex;justify-content:space-between;font-size:10px;color:#a5b2c7;margin-bottom:4px}.field input,.field textarea,.field select{width:100%;border:1px solid #34445f;background:#090e17;color:#fff;border-radius:8px;padding:8px}.field textarea{height:95px;resize:vertical}.row{display:flex;gap:7px}.row>*{flex:1}.hint{font-size:9px;color:#75869f;line-height:1.45}.pill{display:inline-flex;align-items:center;gap:5px;font-size:9px;border:1px solid #41516d;padding:3px 7px;border-radius:999px;color:#b8c7df}.dot{width:6px;height:6px;border-radius:50%;background:#72819b}.dot.good{background:#77d89c}.dot.warn{background:#f1c56c}.dot.bad{background:#f07886}.workspace{display:grid;grid-template-rows:52px minmax(0,1fr);min-width:0}.toolbar{background:#0d131e;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 12px}.toolbar .grow{flex:1}.tabs{display:flex;gap:6px}.tab{padding:7px 10px}.tab.active{background:#263a61;border-color:#5d76a9}.view{display:none;height:100%;overflow:auto;padding:13px}.view.active{display:block}.trace{display:flex;flex-direction:column;gap:7px}.traceItem{border:1px solid #30415d;background:#0d1420;border-radius:9px;padding:8px;font-size:10px;line-height:1.4}.traceItem b{font-size:10px}.traceItem .time{float:right;color:#74849c}.traceItem.running{border-color:#6178a5}.traceItem.done{border-color:#3c694c}.traceItem.error{border-color:#7a3947}.storyTitle{font-size:20px;font-weight:850;margin-bottom:5px}.summary{font-size:11px;color:#b0bdd0;line-height:1.55}.shotGrid,.assetGrid,.inventoryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:9px}.shotCard,.assetCard,.inventoryCard{border:1px solid #30415c;background:#101722;border-radius:11px;padding:9px}.shotCard h4,.assetCard h4,.inventoryCard h4{margin:0 0 5px;font-size:12px}.meta{font-size:9px;color:#7e90aa;line-height:1.5}.assetCard.approved{border-color:#477456}.assetCard.linked{box-shadow:0 0 0 1px #46699c inset}.route{margin-top:7px}.route select{width:100%;background:#0a1019;color:#fff;border:1px solid #34445f;border-radius:7px;padding:6px;font-size:9px}.approveLine{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:10px}.approveLine input{width:auto}.progressWrap{height:8px;background:#090d14;border:1px solid #27344a;border-radius:99px;overflow:hidden}.progressBar{height:100%;width:0;background:linear-gradient(90deg,#6d8aff,#9a67ff);transition:width .25s}.job{border:1px solid #30415d;background:#0e151f;border-radius:10px;padding:9px;margin-bottom:8px}.jobHead{display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-bottom:6px}.jobStatus{font-size:9px;color:#9eacc1;margin-top:5px}.globalProgress{min-width:210px}.uploadBox{border:1px dashed #4b6081;border-radius:11px;padding:12px;text-align:center}.uploadBox input{width:100%;font-size:10px}.preview{width:100%;height:150px;object-fit:contain;background:#080c13;border-radius:8px;border:1px solid #29374c;margin-top:7px}.threePreview{height:180px;background:#080c13;border-radius:8px;border:1px solid #29374c;overflow:hidden;margin-top:7px}.actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.actions button,.actions a{font-size:9px;padding:5px 7px;border-radius:7px;text-decoration:none;color:#fff;border:1px solid #3b4c68;background:#192536}.score{font-size:18px;font-weight:850}.json{white-space:pre-wrap;word-break:break-word;font:9px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:#090e16;border:1px solid #2d3a50;border-radius:8px;padding:7px;max-height:280px;overflow:auto}.settings{display:grid;grid-template-columns:1fr 1fr;gap:7px}.statusLine{font-size:10px;padding:7px 8px;border:1px solid #30415d;background:#0b111a;border-radius:8px;margin-top:7px}.providerTag{display:inline-block;font-size:8px;border-radius:999px;padding:2px 5px;background:#1c2940;border:1px solid #405374;color:#afc0dd}.empty{font-size:10px;color:#7f90a9;padding:14px;text-align:center;border:1px dashed #31415b;border-radius:9px}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:20;background:#111a29;border:1px solid #425474;border-radius:10px;padding:9px 12px;font-size:10px;display:none;max-width:520px}.toast.show{display:block}.goodText{color:var(--good)}.badText{color:var(--bad)}.warnText{color:var(--warn)}.apiCheckGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.apiCheck{border:1px solid #30415d;background:#0b111a;border-radius:8px;padding:7px;font-size:9px;line-height:1.35}.apiCheck b{display:block;margin-bottom:3px}.apiCheck.ok{border-color:#397453}.apiCheck.fail{border-color:#713846}.apiCheck.testing{border-color:#6c6195}.apiActions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.apiActions button{font-size:9px;padding:6px}.endpoint{font-family:ui-monospace,monospace;color:#8194b2;word-break:break-all;font-size:8px}
+
+.animLayout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:10px;height:calc(100vh - 90px);min-height:540px}.animStageWrap{position:relative;background:#05080d;border:1px solid #29384f;border-radius:12px;overflow:hidden;min-height:460px}.animStage{position:absolute;inset:0}.animStage canvas{display:block;width:100%;height:100%}.animOverlay{position:absolute;z-index:4;left:10px;right:10px;top:10px;display:flex;align-items:center;gap:6px;pointer-events:none}.animOverlay>*{pointer-events:auto}.animCaption{position:absolute;z-index:4;left:50%;bottom:54px;transform:translateX(-50%);max-width:78%;padding:7px 11px;border:1px solid #42536f;border-radius:9px;background:#090f19d9;text-align:center;font-size:13px;font-weight:700;text-shadow:0 2px 8px #000}.animTimeline{position:absolute;z-index:4;left:12px;right:12px;bottom:12px;background:#0a101ad9;border:1px solid #34445e;border-radius:9px;padding:8px}.animTimeline input{width:100%}.animSide{overflow:auto}.animShot{border:1px solid #30415d;background:#0d1420;border-radius:8px;padding:7px;margin-bottom:6px;font-size:9px}.animShot.active{border-color:#7794d2;background:#182641}.runtimeAsset{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #253147;padding:5px 0;font-size:9px}.runtimeAsset:last-child{border-bottom:0}.animStatus{font-size:9px;color:#a9b7cc;margin-left:auto}.animBadge{font-size:9px;padding:4px 7px;border-radius:999px;border:1px solid #405270;background:#101824}.animJson{max-height:230px}.animHint{font-size:9px;color:#8191a9;line-height:1.45}.animStageEmpty{height:100%;display:flex;align-items:center;justify-content:center;color:#71829d;font-size:12px;padding:30px;text-align:center}.pulseGood{box-shadow:0 0 0 1px #3d7654 inset}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="left">
+  <div class="brand">SceneForge Animate · Phase 3.2</div>
+  <div class="sub">Phase 3.2：故事规划 → 资产生成/上传 → 用户审批 → 自动装配 Three.js 场景 → 时间线动画预览</div>
+
+  <div class="card"><h3>故事</h3>
+    <div class="field"><label>用户 Prompt</label><textarea id="prompt">做一个20秒动画：一个红色小机器人在雨夜的东京小巷寻找丢失的黄色机械猫。它先查看一张纸质地图，随后发现机械猫躲在自动售货机旁，最后两人一起开心地跑出小巷。电影感、可爱、容易看懂。</textarea></div>
+    <div class="field"><label>最大资产数量 <b id="maxAssetsLabel">6</b></label><input id="maxAssets" type="range" min="1" max="12" value="6"/></div>
+    <div class="row"><button id="planBtn" class="primary">✨ 生成规划</button><button id="clearBtn">清除上下文</button></div>
+  </div>
+
+  <div class="card"><h3>API 设置</h3>
+    <div class="field"><label>DeepSeek API Key</label><input id="deepseekKey" type="password" placeholder="sk-..."/></div>
+    <div class="field"><label>Meshy API Key</label><input id="meshyKey" type="password" placeholder="Meshy API key"/></div>
+    <div class="field"><label>千问AI平台 API Key（qianwenai.com）</label><input id="qwenKey" type="password" placeholder="sk-ws-..."/></div>
+    <div class="field"><label>Qwen Proxy URL</label><input id="qwenProxy" type="url" placeholder="https://your-worker.workers.dev"/></div>
+    <div class="hint">DashScope 不允许 raw.githack 浏览器跨域直连，所以 Qwen 必须经过一个很薄的代理。填 Worker 根地址即可，不要加 /qwen-image。Key 与 Proxy URL 都只保存在当前浏览器 session。</div>
+    <div class="apiActions"><button id="verifyDeepseek">验证 DeepSeek</button><button id="verifyQwen">验证 Qwen</button><button id="verifyMeshy">验证 Meshy</button><button id="verifyAll" class="goodBtn">全部验证</button></div>
+    <div class="apiCheckGrid">
+      <div id="deepseekCheck" class="apiCheck"><b>DeepSeek · 未验证</b><span>等待验证</span></div>
+      <div id="qwenCheck" class="apiCheck"><b>Qwen · 未验证</b><span>等待验证</span></div>
+      <div id="meshyCheck" class="apiCheck"><b>Meshy · 未验证</b><span>等待验证</span></div>
+      <div class="apiCheck"><b>Qwen Route</b><span class="endpoint">Browser → Qwen Proxy → DashScope</span></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>Planning Trace</h3><div id="trace" class="trace"><div class="empty">输入故事后点击“生成规划”。这里会显示 Agent 从故事理解到资产路由的阶段性结果。</div></div></div>
+</aside>
+
+<section class="workspace">
+  <div class="toolbar">
+    <div class="tabs"><button class="tab active" data-view="planView">规划</button><button class="tab" data-view="jobsView">生成任务</button><button class="tab" data-view="inventoryView">资产库</button><button class="tab" data-view="animateView">动画预览</button></div><button id="buildAnimationBtn" class="goodBtn" disabled>🎬 生成动画</button>
+    <div class="grow"></div>
+    <div class="globalProgress"><div class="hint" id="globalText">尚未开始生成</div><div class="progressWrap"><div id="globalBar" class="progressBar"></div></div></div>
+  </div>
+
+  <div id="planView" class="view active">
+    <div id="storyBlock" class="card"><div class="empty">尚未生成故事规划。</div></div>
+    <div class="card"><h3>镜头规划</h3><div id="shots" class="shotGrid"><div class="empty">等待规划。</div></div></div>
+    <div class="card"><div class="row" style="align-items:center"><h3 style="margin:0;flex:1">资产规划</h3><button id="approveAllBtn" disabled>全部批准</button><button id="approvePlanBtn" class="goodBtn" disabled>批准计划</button><button id="startBtn" class="primary" disabled>开始生成资产</button></div><div id="assetsPlan" class="assetGrid" style="margin-top:9px"><div class="empty">等待规划。</div></div></div>
+  </div>
+
+  <div id="jobsView" class="view"><div class="card"><h3>资产生成队列</h3><div id="jobs"><div class="empty">批准计划并开始生成后，这里显示每个资产的实时进度。</div></div></div></div>
+
+  <div id="inventoryView" class="view">
+    <div class="card"><h3>上传资产</h3><div class="uploadBox"><input id="uploadInput" type="file" multiple accept="image/png,image/jpeg,image/webp,.glb"/><div class="hint" style="margin-top:6px">支持 PNG/JPG/WebP/GLB。上传后 Agent 会结合当前 Prompt 与资产规划判断是否可复用。</div></div></div>
+    <div class="card"><h3>当前资产</h3><div id="inventory" class="inventoryGrid"><div class="empty">还没有资产。</div></div></div>
+  </div>
+
+  <div id="animateView" class="view">
+    <div class="animLayout">
+      <div class="animStageWrap" id="animStageWrap">
+        <div id="animStage" class="animStage"><div class="animStageEmpty">资产生成完成后点击“生成动画”。Director 会把 Phase 3 的真实资产装入 Phase 1 风格的 Three.js 时间线。</div></div>
+        <div class="animOverlay"><button id="animPlay">▶ 播放</button><button id="animRestart">↺ 重播</button><button id="animRebuild">重新编排</button><span id="animShotBadge" class="animBadge">未编排</span><span id="animStatus" class="animStatus">等待资产</span></div>
+        <div id="animCaption" class="animCaption" style="display:none"></div>
+        <div class="animTimeline"><input id="animSeek" type="range" min="0" max="20" step="0.01" value="0"/></div>
+      </div>
+      <div class="animSide">
+        <div class="card"><h3>Runtime 资产</h3><div id="animAssets"><div class="empty">尚未装配。</div></div></div>
+        <div class="card"><h3>动画镜头</h3><div id="animShots"><div class="empty">尚未编排。</div></div></div>
+        <div class="card"><h3>Director Runtime Plan</h3><div id="animJson" class="json animJson">{}</div></div>
+        <div class="card"><h3>Phase 3.2 说明</h3><div class="animHint">当前版本先不生成音频。GLB 若自带动作 clip 会优先使用；没有骨骼动画时，会用 Phase 1 风格的程序化移动、转身、跳跃、摇摆和旋转完成表演。</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<aside class="right">
+  <div class="card"><h3>审批状态</h3><div id="approvalStatus" class="statusLine">尚未生成规划。</div></div>
+  <div class="card"><h3>选中资产详情</h3><div id="detail"><div class="empty">点击资产规划卡或资产库卡片查看。</div></div></div>
+  <div class="card"><h3>Agent 上下文摘要</h3><div id="contextJson" class="json">{}</div></div>
+</aside>
+</div>
+<div id="toast" class="toast"></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+const $=id=>document.getElementById(id);
+const ui={prompt:$('prompt'),maxAssets:$('maxAssets'),maxAssetsLabel:$('maxAssetsLabel'),planBtn:$('planBtn'),clearBtn:$('clearBtn'),deepseekKey:$('deepseekKey'),meshyKey:$('meshyKey'),qwenKey:$('qwenKey'),qwenProxy:$('qwenProxy'),verifyDeepseek:$('verifyDeepseek'),verifyQwen:$('verifyQwen'),verifyMeshy:$('verifyMeshy'),verifyAll:$('verifyAll'),deepseekCheck:$('deepseekCheck'),qwenCheck:$('qwenCheck'),meshyCheck:$('meshyCheck'),trace:$('trace'),storyBlock:$('storyBlock'),shots:$('shots'),assetsPlan:$('assetsPlan'),approveAllBtn:$('approveAllBtn'),approvePlanBtn:$('approvePlanBtn'),startBtn:$('startBtn'),jobs:$('jobs'),inventory:$('inventory'),uploadInput:$('uploadInput'),approvalStatus:$('approvalStatus'),detail:$('detail'),contextJson:$('contextJson'),globalText:$('globalText'),globalBar:$('globalBar'),toast:$('toast')};
+const ROUTES={qwen_image:'Qwen Image',meshy_text_3d:'Meshy Text→3D',qwen_to_meshy_3d:'Qwen Image → Meshy 3D',use_uploaded:'使用已上传资产',skip:'跳过'};
+const session={get:k=>sessionStorage.getItem(k)||'',set:(k,v)=>v?sessionStorage.setItem(k,v):sessionStorage.removeItem(k)};
+ui.deepseekKey.value=session.get('sf3_deepseek');ui.meshyKey.value=session.get('sf3_meshy');ui.qwenKey.value=session.get('sf3_qwen');ui.qwenProxy.value=session.get('sf3_qwen_proxy');
+for(const [el,key,name] of [[ui.deepseekKey,'sf3_deepseek','deepseek'],[ui.meshyKey,'sf3_meshy','meshy'],[ui.qwenKey,'sf3_qwen','qwen'],[ui.qwenProxy,'sf3_qwen_proxy','qwen']])el.addEventListener('change',()=>{session.set(key,el.value.trim());setApiState(name,'idle','Key 已修改，请重新验证')});
+ui.maxAssets.oninput=()=>ui.maxAssetsLabel.textContent=ui.maxAssets.value;
+
+let storyAnalysis=null,shotPlan=null,projectPlan=null,planApproved=false,history=[],jobs=[],inventory=[],lastSelected=null,planningBusy=false,generationBusy=false;
+const apiState={deepseek:{state:'idle',message:'未验证'},qwen:{state:'idle',message:'未验证'},meshy:{state:'idle',message:'未验证'}};
+const loader=new GLTFLoader();
+
+function toast(msg,ms=3200){ui.toast.textContent=msg;ui.toast.classList.add('show');setTimeout(()=>ui.toast.classList.remove('show'),ms)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function clamp(n,a,b){n=Number(n);return Number.isFinite(n)?Math.max(a,Math.min(b,n)):a}
+function uid(prefix='id'){return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
+function fileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function round1(n){return Math.round(Number(n||0)*10)/10}
+function fmtProgress(n){const x=round1(n);return `${Number.isInteger(x)?x:x.toFixed(1)}%`}
+function providerError(provider,e,endpoint=''){const msg=String(e?.message||e||'未知错误');if(e instanceof TypeError||/Failed to fetch|NetworkError|Load failed/i.test(msg))return `${provider} 无法连接：浏览器请求被网络或 CORS 拦截${endpoint?`（${endpoint}）`:''}`;return `${provider}: ${msg}`}
+function setApiState(name,state,message){apiState[name]={state,message};const map={deepseek:ui.deepseekCheck,qwen:ui.qwenCheck,meshy:ui.meshyCheck},label={deepseek:'DeepSeek',qwen:'Qwen',meshy:'Meshy'},el=map[name];if(!el)return;el.className=`apiCheck ${state==='ok'?'ok':state==='fail'?'fail':state==='testing'?'testing':''}`;el.innerHTML=`<b>${label[name]} · ${state==='ok'?'通过':state==='fail'?'失败':state==='testing'?'验证中':'未验证'}</b><span>${esc(message)}</span>`}
+function httpMeaning(provider,status,text){if(status===401||status===403)return `${provider} 鉴权失败（HTTP ${status}），请检查 API Key/权限`;if(status===402)return `${provider} 余额或计费状态异常（HTTP 402）`;if(status===429)return `${provider} 已连通，但触发限流/额度限制（HTTP 429）`;if(status>=500)return `${provider} 服务端错误（HTTP ${status}）`;return `${provider} HTTP ${status}${text?`：${String(text).slice(0,160)}`:''}`}
+
+function setGlobal(){if(!jobs.length){ui.globalBar.style.width='0%';ui.globalText.textContent='尚未开始生成';return}const p=Math.round(jobs.reduce((s,j)=>s+j.progress,0)/jobs.length);ui.globalBar.style.width=`${p}%`;ui.globalText.textContent=`总体进度 ${p}% · ${jobs.filter(j=>j.status==='completed').length}/${jobs.length} 完成`}
+function traceReset(){ui.trace.innerHTML=''}
+function traceAdd(title,text,state='done'){const d=document.createElement('div');d.className=`traceItem ${state}`;d.innerHTML=`<b>${esc(title)}</b><span class="time">${new Date().toLocaleTimeString()}</span><div style="margin-top:4px">${esc(text)}</div>`;ui.trace.appendChild(d);ui.trace.scrollTop=ui.trace.scrollHeight;return d}
+function traceUpdate(el,text,state='done'){el.className=`traceItem ${state}`;const div=el.querySelector('div');if(div)div.textContent=text}
+function updateContext(){ui.contextJson.textContent=JSON.stringify({prompt:ui.prompt.value,maxAssets:Number(ui.maxAssets.value),storyAnalysis,shotPlan,projectPlan,planApproved,history:history.map(h=>({type:h.type,summary:h.summary})),inventory:inventory.map(x=>({id:x.id,name:x.name,type:x.type,source:x.source,suitability:x.suitability?.score,matchedAssetId:x.suitability?.matchedAssetId}))},null,2)}
+
+function parseLoose(text){const raw=String(text||'').trim();for(const s of [raw,raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''),raw.slice(raw.indexOf('{'),raw.lastIndexOf('}')+1)]){if(!s||!s.includes('{'))continue;try{return JSON.parse(s)}catch{}}throw new Error('Agent 返回的 JSON 无法解析')}
+async function deepseekJSON(system,user,{visionParts=null,model='deepseek-v4-flash'}={}){const key=ui.deepseekKey.value.trim();if(!key)throw new Error('请先填写 DeepSeek API Key');session.set('sf3_deepseek',key);const content=visionParts?[{type:'text',text:user},...visionParts]:user;const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','X-Qwen-Key':key},body:JSON.stringify({model,messages:[{role:'system',content:system},{role:'user',content}],response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:9000})});if(!r.ok)throw new Error(`DeepSeek ${r.status}: ${(await r.text()).slice(0,400)}`);const j=await r.json();const text=j.choices?.[0]?.message?.content||'';try{return parseLoose(text)}catch(e){const rr=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','X-Qwen-Key':key},body:JSON.stringify({model:'deepseek-v4-flash',messages:[{role:'system',content:'Return only one valid JSON object. Repair the malformed JSON without dropping substantive content.'},{role:'user',content:text}],response_format:{type:'json_object'},thinking:{type:'disabled'},max_tokens:9000})});if(!rr.ok)throw e;const jj=await rr.json();return parseLoose(jj.choices?.[0]?.message?.content||'')}}
+
+const STORY_SYSTEM=`You are SceneForge Story Planner. Analyze the user's animation idea, but do not generate assets yet. Return JSON only: {title,summary,duration_seconds,style,characters:[{id,name,description}],environment,important_props:[{id,name,description}],story_beats:[string],planning_summary}. Keep it concise and visually concrete.`;
+const SHOT_SYSTEM=`You are SceneForge Shot Planner. Given a user prompt and story analysis, produce a readable animation storyboard. Return JSON only: {shots:[{id,title,start,end,goal,action,characters:[ids],needed_asset_roles:[strings],camera}],planning_summary}. Keep continuity and make each shot visually understandable.`;
+const ASSET_SYSTEM=`You are SceneForge Asset Router. Given the prompt, story analysis, shots, existing uploaded/generated asset summaries, and a maximum asset count, create the minimum useful asset plan. Supported generation routes are exactly: qwen_image, meshy_text_3d, qwen_to_meshy_3d, use_uploaded, skip. qwen_image makes a 2D image/background/concept. meshy_text_3d creates a 3D asset directly. qwen_to_meshy_3d creates a Qwen concept image first then sends it to Meshy Image-to-3D; prefer this for important stylized characters. use_uploaded only if an existing asset clearly matches. Return JSON only: {assets:[{id,name,role,format_target,description,prompt,required,route,matched_inventory_id,reason}],route_summary,planning_summary}. Never exceed maxAssets.`;
+
+async function createPlan(){if(planningBusy)return;planningBusy=true;ui.planBtn.disabled=true;planApproved=false;projectPlan=null;traceReset();ui.approvalStatus.textContent='Agent 正在规划…';try{const prompt=ui.prompt.value.trim();if(!prompt)throw new Error('请输入故事 Prompt');const t1=traceAdd('1. 理解故事','正在提取角色、场景、动作和风格…','running');storyAnalysis=await deepseekJSON(STORY_SYSTEM,prompt);traceUpdate(t1,storyAnalysis.planning_summary||`已理解故事：${storyAnalysis.title||'Untitled'}`);history.push({type:'story_analysis',summary:storyAnalysis.planning_summary||storyAnalysis.summary,data:storyAnalysis});renderStory();updateContext();const t2=traceAdd('2. 规划镜头','正在安排镜头、时间和动作连续性…','running');shotPlan=await deepseekJSON(SHOT_SYSTEM,`USER PROMPT:\n${prompt}\n\nSTORY ANALYSIS:\n${JSON.stringify(storyAnalysis)}`);traceUpdate(t2,shotPlan.planning_summary||`已规划 ${shotPlan.shots?.length||0} 个镜头`);history.push({type:'shot_plan',summary:shotPlan.planning_summary,data:shotPlan});renderShots();updateContext();const t3=traceAdd('3. 规划资产与路由','正在决定哪些资产复用、生成图片、直接生成3D或先图后3D…','running');const inv=inventory.map(x=>({id:x.id,name:x.name,type:x.type,source:x.source,suitability:x.suitability||null}));const raw=await deepseekJSON(ASSET_SYSTEM,`USER PROMPT:\n${prompt}\n\nSTORY:\n${JSON.stringify(storyAnalysis)}\n\nSHOTS:\n${JSON.stringify(shotPlan)}\n\nEXISTING ASSETS:\n${JSON.stringify(inv)}\n\nmaxAssets=${Number(ui.maxAssets.value)}`);projectPlan={...raw,assets:(Array.isArray(raw.assets)?raw.assets:[]).slice(0,Number(ui.maxAssets.value)).map((a,i)=>({...a,id:String(a.id||`asset_${i+1}`),approved:false,route:ROUTES[a.route]?a.route:'meshy_text_3d'}))};traceUpdate(t3,projectPlan.planning_summary||`已规划 ${projectPlan.assets.length} 个资产`);history.push({type:'asset_plan',summary:projectPlan.planning_summary||projectPlan.route_summary,data:projectPlan});renderAssetPlan();ui.approveAllBtn.disabled=false;ui.approvePlanBtn.disabled=false;ui.approvalStatus.innerHTML='<span class="goodText">规划完成，等待用户批准。</span>';updateContext()}catch(e){console.error(e);traceAdd('规划失败',e.message,'error');ui.approvalStatus.innerHTML=`<span class="badText">${esc(e.message)}</span>`;toast(e.message)}finally{planningBusy=false;ui.planBtn.disabled=false}}
+
+function renderStory(){if(!storyAnalysis){ui.storyBlock.innerHTML='<div class="empty">尚未生成故事规划。</div>';return}ui.storyBlock.innerHTML=`<div class="storyTitle">${esc(storyAnalysis.title)}</div><div class="summary">${esc(storyAnalysis.summary)}</div><div class="actions"><span class="pill">${esc(storyAnalysis.duration_seconds||'')} 秒</span><span class="pill">${esc(storyAnalysis.style||'')}</span><span class="pill">${storyAnalysis.characters?.length||0} 角色</span></div>`}
+function renderShots(){const shots=shotPlan?.shots||[];ui.shots.innerHTML=shots.length?shots.map(s=>`<div class="shotCard"><h4>${esc(s.title)}</h4><div class="meta">${esc(s.start)}–${esc(s.end)}s · ${esc(s.camera||'')}</div><div class="summary" style="margin-top:5px">${esc(s.goal||s.action||'')}</div><div class="meta" style="margin-top:6px">${esc((s.characters||[]).join(', '))}</div></div>`).join(''):'<div class="empty">没有镜头。</div>'}
+function routeOptions(selected){return Object.entries(ROUTES).map(([k,v])=>`<option value="${k}" ${k===selected?'selected':''}>${esc(v)}</option>`).join('')}
+function renderAssetPlan(){const assets=projectPlan?.assets||[];ui.assetsPlan.innerHTML=assets.length?assets.map(a=>`<div class="assetCard ${a.approved?'approved':''} ${a.matched_inventory_id?'linked':''}" data-plan-id="${esc(a.id)}"><h4>${esc(a.name)}</h4><span class="providerTag">${esc(a.role||a.format_target||'asset')}</span><div class="summary" style="margin-top:6px">${esc(a.description)}</div><div class="meta" style="margin-top:5px">${esc(a.reason||'')}</div><div class="route"><select data-route-id="${esc(a.id)}">${routeOptions(a.route)}</select></div><label class="approveLine"><input type="checkbox" data-approve-id="${esc(a.id)}" ${a.approved?'checked':''}/>批准这个资产</label>${a.matched_inventory_id?`<div class="meta goodText" style="margin-top:4px">已匹配上传资产：${esc(a.matched_inventory_id)}</div>`:''}</div>`).join(''):'<div class="empty">Agent 没有规划资产。</div>';ui.assetsPlan.querySelectorAll('[data-plan-id]').forEach(el=>el.onclick=e=>{if(e.target.matches('input,select,option'))return;selectPlanAsset(el.dataset.planId)});ui.assetsPlan.querySelectorAll('[data-route-id]').forEach(sel=>sel.onchange=()=>{const a=projectPlan.assets.find(x=>x.id===sel.dataset.routeId);if(a){a.route=sel.value;planApproved=false;ui.startBtn.disabled=true;ui.approvalStatus.textContent='路由已修改，请重新批准计划。';updateContext()}});ui.assetsPlan.querySelectorAll('[data-approve-id]').forEach(ch=>ch.onchange=()=>{const a=projectPlan.assets.find(x=>x.id===ch.dataset.approveId);if(a){a.approved=ch.checked;renderAssetPlan();updateContext()}})}
+function selectPlanAsset(id){const a=projectPlan?.assets?.find(x=>x.id===id);if(!a)return;lastSelected={kind:'plan',id};ui.detail.innerHTML=`<h3>${esc(a.name)}</h3><div class="summary">${esc(a.description)}</div><div class="statusLine">路由：${esc(ROUTES[a.route]||a.route)}<br>目标：${esc(a.format_target||'')}<br>Prompt：${esc(a.prompt||'')}</div>${a.matched_inventory_id?`<div class="statusLine goodText">匹配资产：${esc(a.matched_inventory_id)}</div>`:''}`}
+
+ui.approveAllBtn.onclick=()=>{if(!projectPlan)return;projectPlan.assets.forEach(a=>a.approved=true);renderAssetPlan();updateContext()};
+ui.approvePlanBtn.onclick=()=>{if(!projectPlan)return;const required=projectPlan.assets.filter(a=>a.required!==false);if(required.some(a=>!a.approved)){toast('请先批准所有必需资产，或使用“全部批准”');return}planApproved=true;ui.startBtn.disabled=false;ui.approvalStatus.innerHTML='<span class="goodText">计划已批准，可以开始生成资产。</span>';traceAdd('4. 用户审批','资产与生成路由已批准。下一步将实际调用供应商 API。');history.push({type:'approval',summary:'用户批准资产计划'});updateContext()};
+
+function newJob(asset){return{id:uid('job'),assetId:asset.id,name:asset.name,route:asset.route,status:'queued',progress:0,message:'等待开始',output:null,intermediate:null,error:null}}
+function renderJobs(){ui.jobs.innerHTML=jobs.length?jobs.map(j=>`<div class="job"><div class="jobHead"><b>${esc(j.name)}</b><span>${esc(ROUTES[j.route]||j.route)}</span></div><div class="progressWrap"><div class="progressBar" style="width:${j.progress}%"></div></div><div class="jobStatus ${j.status==='failed'?'badText':j.status==='completed'?'goodText':''}">${esc(j.message)} · ${fmtProgress(j.progress)}</div>${j.output?.url?`<div class="actions"><button data-download-job="${j.id}">下载结果</button></div>`:''}</div>`).join(''):'<div class="empty">还没有生成任务。</div>';ui.jobs.querySelectorAll('[data-download-job]').forEach(b=>b.onclick=()=>downloadRemote(jobs.find(j=>j.id===b.dataset.downloadJob)?.output?.url,jobs.find(j=>j.id===b.dataset.downloadJob)?.output?.filename||'asset'))}
+function setJob(job,progress,message,status=job.status){job.progress=round1(clamp(progress,0,100));job.message=message;job.status=status;renderJobs();setGlobal()}
+
+function qwenProxyBase(){const v=ui.qwenProxy.value.trim().replace(/\/$/,'');if(!v)throw new Error('请填写 Qwen Proxy URL');return v}
+function qwenEndpoint(){return qwenProxyBase()+'/qwen-image'}
+function extractQwenImage(j){return j?.output?.choices?.[0]?.message?.content?.find(x=>x?.image)?.image||j?.output?.results?.[0]?.url||j?.data?.[0]?.url||null}
+async function qwenImage(prompt,job,base=0,span=100){
+  const key=ui.qwenKey.value.trim();if(!key)throw new Error('请填写千问AI平台 API Key（sk-ws-...）');qwenProxyBase();
+  session.set('sf3_qwen',key);setJob(job,base+span*.12,'Qwen Image 请求已发送','generating');
+  let fake=base+span*.12;const timer=setInterval(()=>{fake=Math.min(base+span*.82,fake+span*.035);setJob(job,fake,'Qwen Image 正在生成','generating')},900);
+  try{
+    let r;
+    try{r=await fetch(qwenEndpoint(),{method:'POST',headers:{'Content-Type':'application/json','X-Qwen-Key':key},body:JSON.stringify({model:'qwen-image-3.0-pro',input:{messages:[{role:'user',content:[{text:prompt}]}]},parameters:{prompt_extend:true}})})}
+    catch(e){throw new Error(providerError('Qwen Proxy',e,qwenProxyBase()))}
+    if(!r.ok){const text=await r.text();throw new Error(httpMeaning('Qwen',r.status,text))}
+    const j=await r.json(),url=extractQwenImage(j);if(!url)throw new Error(`Qwen 已响应，但未找到图片 URL：${JSON.stringify(j).slice(0,400)}`);
+    clearInterval(timer);setJob(job,base+span,'Qwen Image 完成','generating');return{url,filename:`${job.assetId}.png`,provider:'qwen-image-3.0-pro',raw:j};
+  }finally{clearInterval(timer)}
+}
+async function verifyDeepseek(){
+  const key=ui.deepseekKey.value.trim();if(!key){setApiState('deepseek','fail','未填写 API Key');return false}setApiState('deepseek','testing','正在连接 api.deepseek.com/models…');
+  try{const r=await fetch('https://api.deepseek.com/models',{headers:{Authorization:`Bearer ${key}`}});const text=await r.text();if(r.ok){setApiState('deepseek','ok',`连接和鉴权成功（HTTP ${r.status}）`);return true}setApiState('deepseek','fail',httpMeaning('DeepSeek',r.status,text));return false}catch(e){setApiState('deepseek','fail',providerError('DeepSeek',e,'api.deepseek.com'));return false}}
+async function verifyQwen(){
+  const key=ui.qwenKey.value.trim();if(!key){setApiState('qwen','fail','未填写 API Key');return false}
+  if(!key.startsWith('sk-ws-')){setApiState('qwen','fail','Key 应以 sk-ws- 开头');return false}
+  let base;try{base=qwenProxyBase()}catch(e){setApiState('qwen','fail','DashScope 被浏览器 CORS 阻止，请先填写 Qwen Proxy URL');return false}
+  setApiState('qwen','testing','正在验证 Proxy 和 DashScope 鉴权…');
+  try{
+    const health=await fetch(base+'/health');if(!health.ok){setApiState('qwen','fail',`Proxy /health HTTP ${health.status}`);return false}
+    const r=await fetch(base+'/verify-qwen',{method:'POST',headers:{'Content-Type':'application/json','X-Qwen-Key':key},body:'{}'});
+    if(!r.ok){const t=await r.text();setApiState('qwen','fail',`Proxy 验证失败 HTTP ${r.status}: ${t.slice(0,180)}`);return false}
+    const j=await r.json(),st=Number(j.upstream_status);
+    if([200,400,422].includes(st)){setApiState('qwen','ok',`Proxy 可达，DashScope 鉴权通过（上游 HTTP ${st}；测试未生成图片）`);return true}
+    setApiState('qwen','fail',httpMeaning('Qwen/DashScope',st,j.upstream_body||''));return false
+  }catch(e){setApiState('qwen','fail',providerError('Qwen Proxy',e,base));return false}
+}
+async function verifyMeshy(){
+  const key=ui.meshyKey.value.trim();if(!key){setApiState('meshy','fail','未填写 API Key');return false}setApiState('meshy','testing','正在连接 api.meshy.ai…');
+  try{const r=await fetch('https://api.meshy.ai/openapi/v2/text-to-3d',{headers:{Authorization:`Bearer ${key}`}});const text=await r.text();if(r.ok||[400,404,405].includes(r.status)){setApiState('meshy','ok',`接口可达且鉴权未被拒绝（HTTP ${r.status}）`);return true}setApiState('meshy','fail',httpMeaning('Meshy',r.status,text));return false}catch(e){setApiState('meshy','fail',providerError('Meshy',e,'api.meshy.ai'));return false}}
+async function verifyAll(){ui.verifyAll.disabled=true;try{const results=await Promise.all([verifyDeepseek(),verifyQwen(),verifyMeshy()]);toast(results.every(Boolean)?'三个 API 均验证通过':'有 API 未通过，请查看验证状态')}finally{ui.verifyAll.disabled=false}}
+async function preflightForPlan(){const approved=projectPlan?.assets?.filter(a=>a.approved)||[],needQwen=approved.some(a=>['qwen_image','qwen_to_meshy_3d'].includes(a.route)),needMeshy=approved.some(a=>['meshy_text_3d','qwen_to_meshy_3d'].includes(a.route));const checks=[];if(needQwen&&apiState.qwen.state!=='ok')checks.push(verifyQwen());if(needMeshy&&apiState.meshy.state!=='ok')checks.push(verifyMeshy());if(!checks.length)return true;const result=await Promise.all(checks);return result.every(Boolean)}
+
+async function meshyCreate(path,body){const key=ui.meshyKey.value.trim();if(!key)throw new Error('请填写 Meshy API Key');session.set('sf3_meshy',key);let r;try{r=await fetch(`https://api.meshy.ai${path}`,{method:'POST',headers:{'Content-Type':'application/json','X-Qwen-Key':key},body:JSON.stringify(body)})}catch(e){throw new Error(providerError('Meshy',e,'api.meshy.ai'))};if(!r.ok)throw new Error(`Meshy ${r.status}: ${(await r.text()).slice(0,500)}`);return r.json()}
+async function meshyPoll(path,id,job,base,span,label){const key=ui.meshyKey.value.trim();for(let i=0;i<240;i++){const r=await fetch(`https://api.meshy.ai${path}/${id}`,{headers:{'Authorization':`Bearer ${key}`}});if(!r.ok)throw new Error(`Meshy status ${r.status}: ${(await r.text()).slice(0,300)}`);const j=await r.json();const p=Number.isFinite(Number(j.progress))?Number(j.progress):j.status==='PENDING'?5:50;setJob(job,base+span*(p/100),`${label} · ${j.status||''}`,'generating');if(j.status==='SUCCEEDED')return j;if(['FAILED','CANCELED'].includes(j.status))throw new Error(j.task_error?.message||`${label} 失败`);await sleep(1800)}throw new Error(`${label} 等待超时`)}
+async function meshyText3D(asset,job){setJob(job,5,'创建 Meshy 3D Preview','generating');const preview=await meshyCreate('/openapi/v2/text-to-3d',{mode:'preview',prompt:asset.prompt||asset.description||asset.name,ai_model:'latest',target_formats:['glb'],should_remesh:false,...(String(asset.role||'').includes('character')?{pose_mode:'a-pose'}:{})});const previewId=preview.result;if(!previewId)throw new Error('Meshy Preview 没有返回 task id');const pj=await meshyPoll('/openapi/v2/text-to-3d',previewId,job,8,42,'Meshy Preview');setJob(job,52,'创建 Meshy Refine','generating');const refine=await meshyCreate('/openapi/v2/text-to-3d',{mode:'refine',preview_task_id:previewId,enable_pbr:true,target_formats:['glb'],auto_size:true});const refineId=refine.result;if(!refineId)throw new Error('Meshy Refine 没有返回 task id');const rj=await meshyPoll('/openapi/v2/text-to-3d',refineId,job,55,44,'Meshy Refine');const url=rj.model_urls?.glb;if(!url)throw new Error('Meshy 任务成功但没有 GLB URL');return{url,filename:`${asset.id}.glb`,thumbnail:rj.thumbnail_url,provider:'meshy-text-to-3d',raw:rj}}
+async function meshyImage3D(asset,imageUrl,job,base=32,span=68){setJob(job,base,'创建 Meshy Image-to-3D','generating');const created=await meshyCreate('/openapi/v1/image-to-3d',{image_url:imageUrl,ai_model:'latest',should_texture:true,enable_pbr:true,should_remesh:false,target_formats:['glb'],...(String(asset.role||'').includes('character')?{pose_mode:'a-pose'}:{})});const id=created.result;if(!id)throw new Error('Meshy Image-to-3D 没有返回 task id');const j=await meshyPoll('/openapi/v1/image-to-3d',id,job,base+3,span-4,'Meshy Image-to-3D');const url=j.model_urls?.glb;if(!url)throw new Error('Meshy 完成但没有 GLB URL');return{url,filename:`${asset.id}.glb`,thumbnail:j.thumbnail_url,provider:'meshy-image-to-3d',raw:j}}
+
+async function executeJob(job,asset){try{if(asset.route==='skip'){setJob(job,100,'已跳过','completed');return}if(asset.route==='use_uploaded'){const inv=inventory.find(x=>x.id===asset.matched_inventory_id);if(!inv)throw new Error('没有找到匹配的上传资产');job.output={url:inv.url,filename:inv.name,provider:'uploaded',inventoryId:inv.id};setJob(job,100,'已使用上传资产','completed');return}if(asset.route==='qwen_image'){job.output=await qwenImage(asset.prompt||asset.description,job,0,100);addGeneratedToInventory(asset,job.output);setJob(job,100,'图片生成完成','completed');return}if(asset.route==='meshy_text_3d'){job.output=await meshyText3D(asset,job);addGeneratedToInventory(asset,job.output);setJob(job,100,'3D 资产生成完成','completed');return}if(asset.route==='qwen_to_meshy_3d'){const concept=await qwenImage(`${asset.prompt||asset.description}. Single isolated asset, clean background, full body/object visible, suitable as image-to-3D reference.`,job,0,30);job.intermediate=concept;if(!inventory.some(x=>x.planAssetId===asset.id&&x.provider==='qwen-image-3.0-pro'))addGeneratedToInventory(asset,concept);job.output=await meshyImage3D(asset,concept.url,job,30,70);job.output.conceptUrl=concept.url;addGeneratedToInventory(asset,job.output);setJob(job,100,'概念图 + 3D 资产生成完成','completed');return}throw new Error(`不支持的 route: ${asset.route}`)}catch(e){console.error(e);job.error=e.message;setJob(job,job.progress,e.message,'failed')}}
+async function startGeneration(){if(generationBusy||!planApproved||!projectPlan)return;const approved=projectPlan.assets.filter(a=>a.approved);if(!approved.length){toast('没有已批准的资产');return}ui.startBtn.disabled=true;ui.approvalStatus.innerHTML='<span class="warnText">正在验证本次生成所需 API…</span>';const preflightOk=await preflightForPlan();if(!preflightOk){ui.startBtn.disabled=false;ui.approvalStatus.innerHTML='<span class="badText">API 预检失败，请先修复上方 API 状态。</span>';toast('API 预检失败，尚未开始资产生成');return}generationBusy=true;ui.approvalStatus.innerHTML='<span class="goodText">API 预检通过，开始生成资产。</span>';jobs=approved.map(newJob);renderJobs();setGlobal();document.querySelector('[data-view="jobsView"]').click();traceAdd('5. 开始资产生成',`已建立 ${jobs.length} 个资产任务，将按计划调用供应商 API。`);try{for(const job of jobs){const asset=projectPlan.assets.find(a=>a.id===job.assetId);await executeJob(job,asset)}traceAdd('6. 生成阶段结束',`${jobs.filter(j=>j.status==='completed').length}/${jobs.length} 个资产完成。`);history.push({type:'generation',summary:`${jobs.filter(j=>j.status==='completed').length}/${jobs.length} assets completed`});updateContext()}finally{generationBusy=false;ui.startBtn.disabled=false}}
+
+function addGeneratedToInventory(spec,out){const item={id:uid('gen'),name:out.filename||spec.name,type:out.filename?.endsWith('.glb')?'glb':'image',source:'generated',url:out.url,thumbnail:out.thumbnail||out.conceptUrl||out.url,planAssetId:spec.id,provider:out.provider,suitability:{usable:true,score:1,matchedAssetId:spec.id,reason:'由当前资产计划生成'}};inventory.push(item);renderInventory();updateContext()}
+async function downloadRemote(url,filename){if(!url)return;try{const r=await fetch(url);if(!r.ok)throw new Error('download');const blob=await r.blob();const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename||'asset';a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)}catch{window.open(url,'_blank')}}
+
+async function renderGlbViews(file){const url=URL.createObjectURL(file);try{const gltf=await loader.loadAsync(url);const scene=new THREE.Scene();scene.background=new THREE.Color(0x101620);const root=gltf.scene;scene.add(root);root.traverse(n=>{if(n.isMesh){n.material=n.material.clone();n.material.side=THREE.DoubleSide}});const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),max=Math.max(size.x,size.y,size.z)||1;root.position.sub(center);root.scale.setScalar(2.5/max);scene.add(new THREE.HemisphereLight(0xffffff,0x333333,3));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(4,5,4);scene.add(dl);const camera=new THREE.PerspectiveCamera(42,1,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(512,512,false);renderer.outputColorSpace=THREE.SRGBColorSpace;const shots=[[0,1.2,4.5],[4.5,1.2,0],[-4.5,1.2,0]],outs=[];for(const p of shots){camera.position.set(...p);camera.lookAt(0,0,0);renderer.render(scene,camera);outs.push(renderer.domElement.toDataURL('image/jpeg',.78))}renderer.dispose();return outs}finally{URL.revokeObjectURL(url)}}
+const SUIT_SYSTEM=`You are SceneForge Asset Inspector. Determine whether an uploaded visual asset is useful for the CURRENT user's animation prompt and asset plan. You may receive one image or three rendered views of a GLB. Return JSON only: {usable:boolean,score:number between 0 and 1,matchedAssetId:string|null,assetDescription,reason,concerns:[string],suggestedAction:'use'|'use_with_changes'|'reject'}. Match only to real planned asset ids.`;
+async function inspectUpload(item,visionDataUrls){const planSummary={prompt:ui.prompt.value,story:storyAnalysis,assets:projectPlan?.assets?.map(a=>({id:a.id,name:a.name,role:a.role,description:a.description,route:a.route}))||[]};const parts=visionDataUrls.map(u=>({type:'image_url',image_url:{url:u,detail:'low'}}));return deepseekJSON(SUIT_SYSTEM,`CURRENT PROJECT:\n${JSON.stringify(planSummary)}\n\nUPLOADED FILE: ${item.name} (${item.type})`,{model:'deepseek-v4-flash-vision-exp',visionParts:parts})}
+async function handleUploads(files){for(const file of files){const type=file.type.startsWith('image/')?'image':file.name.toLowerCase().endsWith('.glb')?'glb':'unknown';if(type==='unknown'){toast(`暂不支持 ${file.name}`);continue}const item={id:uid('upload'),name:file.name,type,source:'uploaded',file,url:URL.createObjectURL(file),thumbnail:null,suitability:null,inspecting:true};inventory.push(item);renderInventory();try{let views;if(type==='image'){const data=await fileToDataUrl(file);item.thumbnail=item.url;views=[data]}else{views=await renderGlbViews(file);item.thumbnail=views[0];item.renderedViews=views}item.suitability=await inspectUpload(item,views);item.inspecting=false;if(item.suitability?.usable&&item.suitability.matchedAssetId&&projectPlan){const a=projectPlan.assets.find(x=>x.id===item.suitability.matchedAssetId);if(a&&!a.matched_inventory_id){a.matched_inventory_id=item.id;a.route='use_uploaded';renderAssetPlan()}}history.push({type:'upload_inspection',summary:`${file.name}: ${item.suitability?.reason||''}`});renderInventory();updateContext()}catch(e){item.inspecting=false;item.suitability={usable:false,score:0,reason:e.message,concerns:[e.message],suggestedAction:'reject'};renderInventory();toast(`识别 ${file.name} 失败：${e.message}`)}}}
+function renderInventory(){ui.inventory.innerHTML=inventory.length?inventory.map(x=>`<div class="inventoryCard" data-inv-id="${x.id}"><h4>${esc(x.name)}</h4><span class="providerTag">${esc(x.source)}</span>${x.thumbnail?`<img class="preview" src="${x.thumbnail}" alt="preview"/>`:x.type==='glb'?'<div class="threePreview"></div>':''}<div class="meta" style="margin-top:6px">${x.inspecting?'Agent 正在识别…':x.suitability?`适配分：${Math.round((x.suitability.score||0)*100)}% · ${esc(x.suitability.suggestedAction||'')}`:''}</div>${x.suitability?`<div class="summary" style="margin-top:4px">${esc(x.suitability.reason)}</div>`:''}<div class="actions"><button data-dl-inv="${x.id}">下载</button>${x.suitability?.matchedAssetId?`<button data-use-inv="${x.id}">用于 ${esc(x.suitability.matchedAssetId)}</button>`:''}</div></div>`).join(''):'<div class="empty">还没有资产。</div>';ui.inventory.querySelectorAll('[data-inv-id]').forEach(el=>el.onclick=e=>{if(e.target.matches('button'))return;selectInventory(el.dataset.invId)});ui.inventory.querySelectorAll('[data-dl-inv]').forEach(b=>b.onclick=()=>{const x=inventory.find(i=>i.id===b.dataset.dlInv);if(x?.source==='uploaded'){const a=document.createElement('a');a.href=x.url;a.download=x.name;a.click()}else downloadRemote(x?.url,x?.name)});ui.inventory.querySelectorAll('[data-use-inv]').forEach(b=>b.onclick=()=>linkInventory(b.dataset.useInv))}
+function selectInventory(id){const x=inventory.find(i=>i.id===id);if(!x)return;lastSelected={kind:'inventory',id};ui.detail.innerHTML=`<h3>${esc(x.name)}</h3>${x.thumbnail?`<img class="preview" src="${x.thumbnail}"/>`:''}<div class="statusLine">类型：${esc(x.type)}<br>来源：${esc(x.source)}${x.provider?`<br>Provider：${esc(x.provider)}`:''}</div>${x.suitability?`<div class="statusLine"><b>Agent 判断</b><br><span class="score">${Math.round((x.suitability.score||0)*100)}%</span><br>${esc(x.suitability.reason)}<br><br>${esc((x.suitability.concerns||[]).join('；'))}</div>`:''}`}
+function linkInventory(id){const x=inventory.find(i=>i.id===id);const aid=x?.suitability?.matchedAssetId;if(!x||!aid||!projectPlan)return;const a=projectPlan.assets.find(v=>v.id===aid);if(!a)return;a.matched_inventory_id=x.id;a.route='use_uploaded';a.approved=true;planApproved=false;ui.startBtn.disabled=true;renderAssetPlan();ui.approvalStatus.textContent='已绑定上传资产，请重新批准计划。';toast(`已将 ${x.name} 用于 ${a.name}`);updateContext()}
+
+ui.verifyDeepseek.onclick=verifyDeepseek;ui.verifyQwen.onclick=verifyQwen;ui.verifyMeshy.onclick=verifyMeshy;ui.verifyAll.onclick=verifyAll;ui.uploadInput.onchange=()=>handleUploads([...ui.uploadInput.files]);ui.planBtn.onclick=createPlan;ui.startBtn.onclick=startGeneration;ui.clearBtn.onclick=()=>{storyAnalysis=null;shotPlan=null;projectPlan=null;planApproved=false;history=[];jobs=[];ui.storyBlock.innerHTML='<div class="empty">尚未生成故事规划。</div>';ui.shots.innerHTML='<div class="empty">等待规划。</div>';ui.assetsPlan.innerHTML='<div class="empty">等待规划。</div>';ui.jobs.innerHTML='<div class="empty">还没有生成任务。</div>';ui.trace.innerHTML='<div class="empty">上下文已清除。已上传/生成的资产库保留。</div>';ui.approveAllBtn.disabled=true;ui.approvePlanBtn.disabled=true;ui.startBtn.disabled=true;ui.approvalStatus.textContent='上下文已清除。资产库仍保留。';setGlobal();updateContext()};
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));t.classList.add('active');$(t.dataset.view).classList.add('active')});
+renderInventory();updateContext();
+
+
+// ========================= Phase 3.2: Phase 3 assets + Phase 1 runtime =========================
+const animUI={
+  build:$('buildAnimationBtn'),play:$('animPlay'),restart:$('animRestart'),rebuild:$('animRebuild'),seek:$('animSeek'),
+  stage:$('animStage'),stageWrap:$('animStageWrap'),status:$('animStatus'),caption:$('animCaption'),badge:$('animShotBadge'),
+  assets:$('animAssets'),shots:$('animShots'),json:$('animJson')
+};
+let animPlan32=null,animActors32=new Map(),animPlaying32=false,animTime32=0,animLast32=performance.now(),animReady32=false,animBuilding32=false;
+let animScene32=null,animCamera32=null,animRenderer32=null,animRAF32=null;
+const animLoader32=new GLTFLoader();
+const ANIM_CAM32={wide:[0,5.2,12.5],medium:[0,3.5,8.3],close:[0,2.5,5.1],reaction:[2.8,2.7,5.5],follow:[4.2,3.4,7.4]};
+const ANIM_ACTIONS32=['idle','walk','run','wave','dance','jump','spin','react','face','pause'];
+
+function isLocal32(){return ['127.0.0.1','localhost'].includes(location.hostname)}
+function runtimeUrl32(url){if(!url||/^(blob:|data:)/i.test(url))return url;return isLocal32()?`/asset-proxy?url=${encodeURIComponent(url)}`:url}
+function invForAsset32(id){
+  const spec=projectPlan?.assets?.find(a=>a.id===id);
+  const matches=inventory.filter(x=>x.planAssetId===id||x.suitability?.matchedAssetId===id||x.id===spec?.matched_inventory_id);
+  return matches.sort((a,b)=>(b.type==='glb')-(a.type==='glb'))[0]||null;
+}
+function availableRuntimeAssets32(){return (projectPlan?.assets||[]).map(a=>({spec:a,inv:invForAsset32(a.id)})).filter(x=>x.inv?.url)}
+function updateAnimButton32(){if(animUI.build)animUI.build.disabled=availableRuntimeAssets32().length===0||animBuilding32}
+
+function initAnimScene32(){
+  if(animRenderer32)return;
+  animScene32=new THREE.Scene();animScene32.background=new THREE.Color(0x080d18);
+  animCamera32=new THREE.PerspectiveCamera(48,1,.1,300);animCamera32.position.set(0,4.5,11);
+  animRenderer32=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+  animRenderer32.setPixelRatio(Math.min(devicePixelRatio,1.5));animRenderer32.outputColorSpace=THREE.SRGBColorSpace;
+  animUI.stage.innerHTML='';animUI.stage.appendChild(animRenderer32.domElement);
+  animScene32.add(new THREE.HemisphereLight(0xcfe1ff,0x30261f,2.2));
+  const key=new THREE.DirectionalLight(0xffffff,3.1);key.position.set(5,9,6);animScene32.add(key);
+  const rim=new THREE.DirectionalLight(0x7b91ff,1.5);rim.position.set(-5,5,-6);animScene32.add(rim);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0x151b25,roughness:.88,metalness:.05}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;animScene32.add(floor);
+  const grid=new THREE.GridHelper(40,40,0x34435a,0x1e2938);grid.position.y=0;animScene32.add(grid);
+  resizeAnim32();
+  if(!animRAF32)animLoop32(performance.now());
+}
+function resizeAnim32(){if(!animRenderer32||!animCamera32)return;const w=Math.max(2,animUI.stage.clientWidth),h=Math.max(2,animUI.stage.clientHeight);animRenderer32.setSize(w,h,false);animCamera32.aspect=w/h;animCamera32.updateProjectionMatrix()}
+new ResizeObserver(()=>resizeAnim32()).observe(animUI.stageWrap);
+
+function clearAnimActors32(){
+  for(const a of animActors32.values()){
+    a.mixer?.stopAllAction();
+    animScene32?.remove(a.wrap);
+  }
+  animActors32.clear();animReady32=false;
+}
+function assetRole32(spec){return String(spec?.role||'').toLowerCase()}
+function targetSize32(spec){const r=assetRole32(spec);if(r.includes('environment')||r.includes('scene')||r.includes('background'))return 8;if(r.includes('character'))return 1.8;if(r.includes('vehicle'))return 2.5;return 1.0}
+async function texture32(url){return await new THREE.TextureLoader().loadAsync(runtimeUrl32(url))}
+async function loadRuntimeAsset32(spec,inv,index,total){
+  const wrap=new THREE.Group();wrap.name=spec.id;animScene32.add(wrap);
+  const role=assetRole32(spec);let model=null,mixer=null,clips=[];
+  if(inv.type==='glb'){
+    const gltf=await animLoader32.loadAsync(runtimeUrl32(inv.url));model=gltf.scene;clips=gltf.animations||[];wrap.add(model);
+    model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});
+    let box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3());const max=Math.max(size.x,size.y,size.z)||1;
+    const desired=targetSize32(spec),scale=desired/max;model.scale.setScalar(scale);
+    box=new THREE.Box3().setFromObject(model);const c=box.getCenter(new THREE.Vector3());model.position.x-=c.x;model.position.z-=c.z;model.position.y-=box.min.y;
+    if(clips.length)mixer=new THREE.AnimationMixer(model);
+  }else{
+    const tex=await texture32(inv.url);tex.colorSpace=THREE.SRGBColorSpace;
+    if(role.includes('environment')||role.includes('background')||role.includes('scene')){
+      const geo=new THREE.PlaneGeometry(16,9);const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide});model=new THREE.Mesh(geo,mat);model.position.set(0,4.5,-7);wrap.add(model);
+    }else{
+      const geo=new THREE.PlaneGeometry(1.8,1.8);const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide});model=new THREE.Mesh(geo,mat);model.position.y=.9;wrap.add(model);
+    }
+  }
+  const actor={id:spec.id,spec,inv,wrap,model,mixer,clips,currentClip:null,baseScale:wrap.scale.clone(),baseY:0,index,total};animActors32.set(spec.id,actor);return actor;
+}
+function clipForAction32(actor,action){if(!actor?.clips?.length)return null;const synonyms={idle:['idle','standing','survey'],walk:['walk','walking'],run:['run','running'],wave:['wave','hello'],dance:['dance'],jump:['jump'],react:['yes','no','react','thumb'],spin:['dance']};const names=synonyms[action]||[action];return actor.clips.find(c=>names.some(n=>c.name.toLowerCase().includes(n)))||null}
+function setActorClip32(actor,action,timeInAction=0){if(!actor.mixer)return;const clip=clipForAction32(actor,action);if(!clip){actor.mixer.stopAllAction();actor.currentClip=null;return}if(actor.currentClip!==clip.name){actor.mixer.stopAllAction();const ac=actor.mixer.clipAction(clip);ac.reset().play();actor.currentClip=clip.name}actor.mixer.setTime(Math.max(0,timeInAction))}
+function yawTo32(a,b){return Math.atan2(b[0]-a[0],b[2]-a[2])}
+function lerp32(a,b,t){return a+(b-a)*t}
+function lerp3_32(a,b,t){return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]}
+function ease32(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)}
+function normCamera32(v){v=String(v||'medium').toLowerCase();return ANIM_CAM32[v]?v:(v.includes('wide')?'wide':v.includes('close')?'close':v.includes('follow')?'follow':v.includes('reaction')?'reaction':'medium')}
+function currentShot32(t){return animPlan32?.shots?.find(s=>t>=s.start&&t<s.end)||animPlan32?.shots?.at(-1)||null}
+function activeBeat32(id,t){return animPlan32?.beats?.filter(b=>b.target===id&&t>=b.start&&t<=b.end).sort((a,b)=>b.start-a.start)[0]||null}
+function actorState32(id,t){
+  const actor=animPlan32.actors.find(a=>a.assetId===id);let pos=[...actor.position],yaw=actor.rotationY||0,action='idle',actionStart=0;
+  const beats=animPlan32.beats.filter(b=>b.target===id).sort((a,b)=>a.start-b.start);
+  for(const b of beats){if(t<b.start)continue;action=b.action;actionStart=b.start;
+    if(['walk','run'].includes(b.action)&&b.to){const from=b.from||pos,to=b.to;if(t>=b.end)pos=[...to];else pos=lerp3_32(from,to,ease32((t-b.start)/Math.max(.01,b.end-b.start)));yaw=yawTo32(from,to);if(t>=b.end)pos=[...to]}
+    if(b.action==='face'&&b.faceTarget){const other=animPlan32.actors.find(a=>a.assetId===b.faceTarget);if(other)yaw=yawTo32(pos,actorState32Simple32(other.assetId,t).pos)}
+  }
+  return{pos,yaw,action,actionTime:Math.max(0,t-actionStart)}
+}
+function actorState32Simple32(id,t){const actor=animPlan32.actors.find(a=>a.assetId===id);let pos=[...(actor?.position||[0,0,0])];for(const b of animPlan32.beats.filter(x=>x.target===id&&['walk','run'].includes(x.action)).sort((a,b)=>a.start-b.start)){if(t<b.start)continue;const from=b.from||pos,to=b.to||pos;pos=t>=b.end?[...to]:lerp3_32(from,to,ease32((t-b.start)/Math.max(.01,b.end-b.start)))}return{pos}}
+function applyAnim32(t){
+  if(!animPlan32)return;
+  for(const def of animPlan32.actors){const a=animActors32.get(def.assetId);if(!a)continue;const st=actorState32(def.assetId,t),beat=activeBeat32(def.assetId,t);a.wrap.position.set(...st.pos);a.wrap.rotation.set(0,st.yaw,0);a.wrap.scale.set(1,1,1);
+    if(beat){const p=Math.max(0,Math.min(1,(t-beat.start)/Math.max(.01,beat.end-beat.start)));if(beat.action==='jump')a.wrap.position.y+=Math.sin(Math.PI*p)*.85;if(beat.action==='wave')a.wrap.rotation.z+=Math.sin(p*Math.PI*6)*.12;if(beat.action==='dance'){a.wrap.position.y+=Math.abs(Math.sin(p*Math.PI*6))*.18;a.wrap.rotation.y+=Math.sin(p*Math.PI*4)*.65}if(beat.action==='spin')a.wrap.rotation.y+=p*Math.PI*2;if(beat.action==='react'){const q=1+Math.sin(p*Math.PI)*.15;a.wrap.scale.set(q,q,q)}}
+    setActorClip32(a,st.action,st.actionTime);
+  }
+  const sh=currentShot32(t);if(sh){const ids=(sh.focus?.length?sh.focus:animPlan32.actors.map(a=>a.assetId)).filter(id=>animActors32.has(id));const pts=ids.map(id=>actorState32Simple32(id,t).pos);const target=pts.length?[pts.reduce((n,p)=>n+p[0],0)/pts.length,1.25,pts.reduce((n,p)=>n+p[2],0)/pts.length]:[0,1.2,0];const off=ANIM_CAM32[sh.camera]||ANIM_CAM32.medium;animCamera32.position.set(target[0]+off[0],off[1],target[2]+off[2]);animCamera32.lookAt(...target);animUI.badge.textContent=`${sh.title} · ${sh.camera}`;animUI.caption.textContent=sh.caption||'';animUI.caption.style.display=sh.caption?'block':'none';}
+  animUI.seek.value=String(t);animUI.status.textContent=`${t.toFixed(1)} / ${animPlan32.duration.toFixed(1)}s`;
+  for(const el of animUI.shots.querySelectorAll('.animShot'))el.classList.toggle('active',el.dataset.id===currentShot32(t)?.id);
+}
+function animLoop32(now){animRAF32=requestAnimationFrame(animLoop32);const dt=Math.min(.05,(now-animLast32)/1000);animLast32=now;if(animPlaying32&&animPlan32){animTime32+=dt;if(animTime32>=animPlan32.duration){animTime32=animPlan32.duration;animPlaying32=false;animUI.play.textContent='▶ 播放'}applyAnim32(animTime32)}if(animRenderer32&&animScene32&&animCamera32)animRenderer32.render(animScene32,animCamera32)}
+
+const ANIM_DIRECTOR32=`You are SceneForge Animation Director. Convert the provided story, storyboard, planned assets and AVAILABLE runtime assets into a constrained Three.js animation timeline. No audio. Use ONLY available asset ids. Return JSON only: {title,duration,actors:[{assetId,position:[x,0,z],rotationY}],shots:[{id,title,start,end,camera,focus:[assetIds],caption}],beats:[{target,action,start,end,to?,faceTarget?}]}. Allowed actions: idle, walk, run, wave, dance, jump, spin, react, face, pause. Cameras: wide, medium, close, reaction, follow. Make 3-6 readable shots, preserve story continuity, avoid teleporting, keep all beat times inside duration. Locomotion automatically faces the movement direction. If an asset is a static image, avoid locomotion unless it represents a character/object. Environment/background assets should normally stay static. Keep the animation visually understandable without audio.`;
+function sanitizeAnimPlan32(raw,avail){
+  const ids=new Set(avail.map(x=>x.spec.id)),duration=Math.max(4,Math.min(60,Number(raw?.duration||storyAnalysis?.duration_seconds||20)||20));
+  const actors=avail.map((x,i)=>{const r=(raw?.actors||[]).find(a=>a.assetId===x.spec.id)||{};const p=Array.isArray(r.position)&&r.position.length>=3?r.position:[(i-(avail.length-1)/2)*2,0,0];return{assetId:x.spec.id,position:[Number(p[0])||0,0,Number(p[2])||0],rotationY:Number(r.rotationY)||0}});
+  let shots=(Array.isArray(raw?.shots)?raw.shots:[]).map((sh,i)=>({id:String(sh.id||`shot${i+1}`),title:String(sh.title||`Shot ${i+1}`),start:Math.max(0,Number(sh.start)||0),end:Math.min(duration,Number(sh.end)||duration),camera:normCamera32(sh.camera),focus:(Array.isArray(sh.focus)?sh.focus:[]).filter(id=>ids.has(id)),caption:String(sh.caption||'').slice(0,180)})).filter(sh=>sh.end>sh.start).sort((a,b)=>a.start-b.start);
+  if(!shots.length){const source=shotPlan?.shots||[];shots=source.length?source.map((sh,i)=>({id:String(sh.id||`shot${i+1}`),title:String(sh.title||`Shot ${i+1}`),start:Math.max(0,Number(sh.start)||0),end:Math.min(duration,Number(sh.end)||duration),camera:normCamera32(sh.camera),focus:actors.slice(0,2).map(a=>a.assetId),caption:String(sh.goal||sh.action||'')})):[{id:'shot1',title:'Main',start:0,end:duration,camera:'wide',focus:actors.map(a=>a.assetId),caption:storyAnalysis?.summary||''}]}
+  const starts=new Map(actors.map(a=>[a.assetId,[...a.position]]));const beats=[];
+  for(const b of (Array.isArray(raw?.beats)?raw.beats:[])){if(!ids.has(b.target)||!ANIM_ACTIONS32.includes(b.action))continue;const start=Math.max(0,Math.min(duration,Number(b.start)||0)),end=Math.max(start+.05,Math.min(duration,Number(b.end)||start+1));const x={target:b.target,action:b.action,start,end};if(Array.isArray(b.to)&&b.to.length>=3)x.to=[Number(b.to[0])||0,0,Number(b.to[2])||0];if(ids.has(b.faceTarget))x.faceTarget=b.faceTarget;if(['walk','run'].includes(x.action)&&x.to){x.from=[...starts.get(x.target)];starts.set(x.target,[...x.to])}beats.push(x)}
+  if(!beats.length&&actors.length){const a=actors[0],b=actors[1];beats.push({target:a.assetId,action:'walk',start:0.5,end:Math.min(3,duration*.25),from:[...a.position],to:[-.7,0,0]});if(b)beats.push({target:b.assetId,action:'wave',start:Math.min(3.1,duration*.3),end:Math.min(5.5,duration*.5)});beats.push({target:a.assetId,action:'dance',start:Math.min(5.5,duration*.5),end:Math.min(8,duration*.7)})}
+  return{title:String(raw?.title||storyAnalysis?.title||'SceneForge Animation'),duration,actors,shots,beats};
+}
+async function buildAnimation32(auto=false){
+  if(animBuilding32)return;const avail=availableRuntimeAssets32();if(!avail.length){toast('还没有可用于动画的资产');return}animBuilding32=true;updateAnimButton32();initAnimScene32();animUI.status.textContent='Director 正在编排动画…';traceAdd('7. 动画编排',`将 ${avail.length} 个已生成/上传资产接入 Phase 1 runtime。`,'running');
+  try{
+    const context={prompt:ui.prompt.value,story:storyAnalysis,storyboard:shotPlan,assetPlan:projectPlan?.assets?.map(a=>({id:a.id,name:a.name,role:a.role,description:a.description}))||[],availableAssets:avail.map(x=>({assetId:x.spec.id,name:x.spec.name,role:x.spec.role,type:x.inv.type,provider:x.inv.provider,hasRuntimeUrl:!!x.inv.url}))};
+    let raw;try{raw=await deepseekJSON(ANIM_DIRECTOR32,`PROJECT CONTEXT:\n${JSON.stringify(context)}`)}catch(e){console.warn('Runtime director fallback',e);raw={title:storyAnalysis?.title,duration:storyAnalysis?.duration_seconds,shots:[],beats:[]}}
+    animPlan32=sanitizeAnimPlan32(raw,avail);clearAnimActors32();animUI.status.textContent='正在装配 Three.js 场景…';
+    for(let i=0;i<avail.length;i++){const {spec,inv}=avail[i];try{await loadRuntimeAsset32(spec,inv,i,avail.length)}catch(e){console.error('runtime asset load',spec.id,e);traceAdd('资产装配警告',`${spec.name}: ${e.message}`,'error')}}
+    animReady32=animActors32.size>0;animUI.assets.innerHTML=avail.map(({spec,inv})=>`<div class="runtimeAsset"><span><b>${esc(spec.name)}</b><br>${esc(spec.role||'asset')}</span><span>${esc(inv.type)} · ${esc(inv.provider||inv.source||'asset')}</span></div>`).join('');
+    animUI.shots.innerHTML=animPlan32.shots.map(sh=>`<div class="animShot" data-id="${esc(sh.id)}"><b>${esc(sh.title)}</b><br>${sh.start.toFixed(1)}–${sh.end.toFixed(1)}s · ${esc(sh.camera)}<br>${esc(sh.caption||'')}</div>`).join('');animUI.json.textContent=JSON.stringify(animPlan32,null,2);animUI.seek.max=String(animPlan32.duration);animTime32=0;applyAnim32(0);animUI.status.textContent=animReady32?'动画已装配，可以播放':'没有资产成功加载';traceAdd('8. Three.js 动画就绪',`${animActors32.size}/${avail.length} 个资产已进入 runtime；音频暂未启用。`,animReady32?'done':'error');
+    document.querySelector('[data-view="animateView"]')?.click();
+  }catch(e){console.error(e);animUI.status.textContent=e.message;toast(`动画装配失败：${e.message}`);traceAdd('动画装配失败',e.message,'error')}
+  finally{animBuilding32=false;updateAnimButton32()}
+}
+
+animUI.build.onclick=()=>buildAnimation32(false);animUI.rebuild.onclick=()=>buildAnimation32(false);
+animUI.play.onclick=()=>{if(!animPlan32)return;animPlaying32=!animPlaying32;if(animTime32>=animPlan32.duration&&animPlaying32)animTime32=0;animUI.play.textContent=animPlaying32?'⏸ 暂停':'▶ 播放'};
+animUI.restart.onclick=()=>{animTime32=0;animPlaying32=false;animUI.play.textContent='▶ 播放';if(animPlan32)applyAnim32(0)};
+animUI.seek.oninput=()=>{animTime32=Number(animUI.seek.value);animPlaying32=false;animUI.play.textContent='▶ 播放';if(animPlan32)applyAnim32(animTime32)};
+
+// Preserve Phase 3 behavior, then automatically compile whatever assets actually succeeded.
+const originalStartGeneration32=ui.startBtn.onclick;
+ui.startBtn.onclick=async()=>{await originalStartGeneration32?.();updateAnimButton32();if(availableRuntimeAssets32().length)await buildAnimation32(true)};
+const originalUpload32=ui.uploadInput.onchange;
+ui.uploadInput.onchange=async(...args)=>{await originalUpload32?.(...args);setTimeout(updateAnimButton32,50)};
+const originalClear32=ui.clearBtn.onclick;
+ui.clearBtn.onclick=(...args)=>{clearAnimActors32();animPlan32=null;animUI.json.textContent='{}';animUI.assets.innerHTML='<div class="empty">尚未装配。</div>';animUI.shots.innerHTML='<div class="empty">尚未编排。</div>';updateAnimButton32();return originalClear32?.(...args)};
+updateAnimButton32();
+// ======================= End Phase 3.2 integration =======================
+
+</script>
+</body>
+</html>
