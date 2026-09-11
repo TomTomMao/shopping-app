@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SceneForge Animate · Phase 1.5.2</title>
+<style>
+:root{color-scheme:dark;--bg:#080b10;--panel:#111722;--card:#151d29;--line:#29364b;--text:#eef3ff;--muted:#91a0b8;--good:#8ce4a5;--warn:#ffd27d;--bad:#ff9aa5}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+body{overflow:hidden}button,input,textarea,select{font:inherit}button{background:#1d2736;color:#fff;border:1px solid #394863;border-radius:9px;padding:8px 10px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.primary{background:linear-gradient(135deg,#6f8cff,#9867ff);border:0;font-weight:700}.apply{background:#173c2b;border-color:#397453}
+.app{height:100%;display:grid;grid-template-columns:380px minmax(600px,1fr) 390px}.side,.right{background:var(--panel);padding:14px;overflow:auto}.side{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}
+.brand{font-weight:850;font-size:21px}.sub{font-size:12px;color:var(--muted);margin:5px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px;margin-bottom:10px}.card h3{font-size:12px;margin:0 0 8px}.field{margin-bottom:9px}.field label{display:flex;justify-content:space-between;font-size:11px;color:#9ba9bf;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;background:#090e16;color:#fff;border:1px solid #34435e;border-radius:9px;padding:8px}.field textarea{height:100px;resize:vertical}.row{display:flex;gap:7px}.row>*{flex:1}.hint{font-size:10px;color:#74839a;line-height:1.45}.check{font-size:10px;color:#95a5bd;display:flex;align-items:center;gap:6px;margin-top:7px}.check input{width:auto}
+.thinking,.logbox{height:170px;overflow:auto;background:#0a0f17;border:1px solid #263349;border-radius:9px;padding:7px;white-space:pre-wrap;font-size:11px;line-height:1.4}.thinking{font-family:ui-monospace,monospace;color:#b8c6dc}.json{font-family:ui-monospace,monospace;font-size:9px;white-space:pre-wrap;word-break:break-word;background:#0a0f17;border:1px solid #263349;border-radius:9px;padding:7px;max-height:230px;overflow:auto}.story,.review{font-size:11px;line-height:1.5}.asset{font-size:10px;border:1px solid #2c394f;border-radius:8px;padding:6px;margin-bottom:5px;background:#101722}
+.workspace{display:grid;grid-template-rows:1fr 160px;min-width:0}.stage{position:relative;min-height:0}.top{position:absolute;z-index:6;left:50%;top:10px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:#0b0f16df;border:1px solid #34425c;border-radius:10px;padding:6px}.status{position:absolute;left:10px;bottom:10px;z-index:6;background:#0b0f16df;border:1px solid #34425c;border-radius:9px;padding:7px 9px;font-size:11px}.captionWrap{position:absolute;z-index:5;left:50%;bottom:42px;transform:translateX(-50%);width:min(760px,80%);text-align:center}.caption{font-weight:750;font-size:20px;text-shadow:0 2px 8px #000}.badge{display:inline-block;font-size:10px;padding:4px 8px;border-radius:999px;background:#111927e8;border:1px solid #41516e;color:#a9bce2;margin-bottom:7px}
+.timeline{border-top:1px solid var(--line);background:#0d121a;padding:10px}.timeline input{width:100%}.shots{height:65px;position:relative;border:1px solid var(--line);border-radius:9px;background:#121a26;margin-top:7px;overflow:hidden}.shot{position:absolute;top:6px;bottom:6px;background:#25385e;border:1px solid #526a9a;border-radius:7px;padding:5px;font-size:9px;overflow:hidden}
+.keyframes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.kf{border:1px solid #34435e;border-radius:8px;overflow:hidden;background:#0b1018}.kf img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}.kf div{font-size:8px;padding:4px;line-height:1.25}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}canvas{display:block;width:100%;height:100%}
+.validation{font-size:10px;line-height:1.45;padding:7px;border-radius:8px;background:#0b1018;border:1px solid #31415b;margin-bottom:7px}.tabBar{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.tabBtn{background:#0d1420;color:#9dadc5;border:1px solid #30415d}.tabBtn.active{background:#25385e;color:#fff;border-color:#6680ba}.tabPanel{display:none}.tabPanel.active{display:block}.miniText{height:120px!important}.modePill{font-size:9px;color:#b7c5dc;border:1px solid #405274;padding:2px 6px;border-radius:999px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">SceneForge Animate · Phase 1.5.2</div>
+  <div class="sub">Director → full-context feedback → plan + runtime calibration</div>
+  <div class="card"><h3>创作</h3>
+    <div class="field"><label>DeepSeek API Key</label><input id="key" type="password" placeholder="sk-..." autocomplete="off"/></div>
+    <div class="field"><label>描述</label><textarea id="prompt">做一个14秒搞笑动画：两个机器人碰面，一个挥手，另一个突然跳舞，最后一起跑掉。镜头要让故事容易看懂。</textarea></div>
+    <div class="field"><label>最大资产数 <b id="limitLabel">4</b></label><input id="limit" type="range" min="1" max="8" value="4"/></div>
+    <div class="row"><button id="generate" class="primary">✨ Agent 生成</button><button id="demo">清晰 Demo</button></div>
+    <div class="row" style="margin-top:7px"><button id="clearContext">清除上下文</button><button id="clearKey">清除 Key</button></div>
+  </div>
+
+  <div class="card"><h3>视觉反馈</h3>
+    <div class="tabBar"><button id="qaTab" class="tabBtn active">多视角自检</button><button id="feedbackTab" class="tabBtn">用户文本反馈</button></div>
+    <div id="qaPanel" class="tabPanel active">
+      <div class="row">
+        <div class="field"><label>每秒采样帧数</label><select id="sampleFps"><option value="0.25">0.25 fps</option><option value="0.5">0.5 fps</option><option value="1" selected>1 fps</option><option value="2">2 fps</option></select></div>
+        <div class="field"><label>最多图片数</label><input id="maxImages" type="number" min="9" max="90" step="3" value="45"/></div>
+      </div>
+      <div class="hint">每个采样时刻截 director / left / right 三视图，并计算朝向点积。</div>
+      <button id="review" style="width:100%;margin-top:8px">👁 多视角自检</button>
+      <label class="check"><input id="autoReview" type="checkbox"/> Agent 生成后自动视觉自检</label>
+    </div>
+    <div id="feedbackPanel" class="tabPanel">
+      <div class="field"><label>你的修改反馈</label><textarea id="feedbackText" class="miniText" placeholder="例如：蓝色机器人走路时面朝方向反了。请保持原剧情，只修复所有走路/跑步朝向，并让互动时双方互相面对。"></textarea></div>
+      <button id="textReview" style="width:100%">💬 根据完整上下文生成修复</button>
+      <div class="hint" style="margin-top:7px">会发送完整 Agent 历史、当前 Director Plan、compiled timeline、当前时间/shot、运行时能力、资产信息、pending repair，以及最近一次多视角 QA 的全部诊断；若已有关键帧，也会一起附上。</div>
+    </div>
+    <div class="row" style="margin-top:9px"><button id="applyRepair" class="apply" disabled>✓ 应用修复</button></div>
+  </div>
+
+  <div class="card"><h3>实时思考流</h3><div id="thinking" class="thinking">等待 Agent…</div></div>
+  <div class="card"><h3>Agent 日志</h3><div id="logs" class="logbox">Phase 1.5.2 就绪。</div></div>
+</aside>
+
+<section class="workspace">
+  <main id="stage" class="stage">
+    <div class="top"><button id="play">▶ 播放</button><button id="restart">↺ 重播</button><button id="orbit">自由镜头</button><span id="time">0.0 / 14.0s</span></div>
+    <div class="captionWrap"><div id="shotBadge" class="badge">Shot</div><div id="caption" class="caption"></div></div>
+    <div id="status" class="status">正在加载本地资产…</div>
+  </main>
+  <section class="timeline"><input id="seek" type="range" min="0" max="14" step="0.01" value="0"/><div id="shots" class="shots"></div></section>
+</section>
+
+<aside class="right">
+  <div class="card"><h3>Storyboard</h3><div id="story" class="story"></div></div>
+  <div class="card"><h3>资产</h3><div id="assets"></div></div>
+  <div class="card"><h3>视觉反馈帧 <span id="feedbackMode" class="modePill">多视角</span></h3><div id="sampleInfo" class="validation">尚未采样。</div><div id="keyframes" class="keyframes"><div class="hint">运行多视角自检后显示；文本反馈会复用这里已有的全部视觉上下文。</div></div></div>
+  <div class="card"><h3>Repair JSON 校验</h3><div id="validation" class="validation">尚无修复 JSON。</div><div id="reviewSummary" class="review">尚未复审。</div><div id="repairJson" class="json">{}</div></div>
+  <div class="card"><h3>Director Plan JSON</h3><div id="json" class="json">{}</div></div>
+</aside>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+const $=id=>document.getElementById(id);
+const ui={
+  key:$('key'),prompt:$('prompt'),limit:$('limit'),limitLabel:$('limitLabel'),generate:$('generate'),demo:$('demo'),
+  clearContext:$('clearContext'),clearKey:$('clearKey'),qaTab:$('qaTab'),feedbackTab:$('feedbackTab'),qaPanel:$('qaPanel'),feedbackPanel:$('feedbackPanel'),sampleFps:$('sampleFps'),maxImages:$('maxImages'),review:$('review'),
+  feedbackText:$('feedbackText'),textReview:$('textReview'),applyRepair:$('applyRepair'),autoReview:$('autoReview'),thinking:$('thinking'),logs:$('logs'),stage:$('stage'),
+  play:$('play'),restart:$('restart'),orbit:$('orbit'),time:$('time'),seek:$('seek'),shots:$('shots'),story:$('story'),
+  assets:$('assets'),feedbackMode:$('feedbackMode'),sampleInfo:$('sampleInfo'),keyframes:$('keyframes'),validation:$('validation'),
+  reviewSummary:$('reviewSummary'),repairJson:$('repairJson'),json:$('json'),status:$('status'),shotBadge:$('shotBadge'),caption:$('caption')
+};
+ui.key.value=sessionStorage.getItem('deepseek_api_key')||'';
+ui.limit.oninput=()=>ui.limitLabel.textContent=ui.limit.value;
+ui.key.onchange=()=>{const v=ui.key.value.trim();v?sessionStorage.setItem('deepseek_api_key',v):sessionStorage.removeItem('deepseek_api_key')};
+
+const CATALOG={
+  robot:{file:'./assets/RobotExpressive.glb',clips:['Idle','Walking','Running','Dance','Wave','Jump','Yes','No','Punch','ThumbsUp','Standing','Sitting']},
+  fox:{file:'./assets/Fox.glb',clips:['Survey','Walk','Run']}
+};
+const CAM={wide:[0,5.4,12.5],medium:[0,3.2,7.2],close:[0,2.25,4.5],reaction:[2.7,2.5,5.1],follow:[4.2,3.4,7.2]};
+const ACTIONS=['walk','run','wave','dance','react','jump','idle','pause','face'];
+// RobotExpressive visual front is opposite the +Z convention used by the director DSL.
+const MODEL_FORWARD_OFFSET={robot:Math.PI,fox:0};
+// Empirical visual calibration: user observed Running faces correctly while the other RobotExpressive clips read 180° reversed.
+const DEFAULT_RUNTIME_CONFIG={clipYawCorrection:{robot:{Idle:Math.PI,Walking:Math.PI,Running:0,Dance:Math.PI,Wave:Math.PI,Jump:Math.PI,Yes:Math.PI,No:Math.PI,Punch:Math.PI,ThumbsUp:Math.PI,Standing:Math.PI,Sitting:Math.PI},fox:{Survey:0,Walk:0,Run:0}}};
+let runtimeConfig=structuredClone(DEFAULT_RUNTIME_CONFIG),pendingRuntimePatch=null;
+let templates={},actors=new Map(),plan=null,timeline={actions:[]},pendingRepair=null,history=[],playing=false,current=0,last=performance.now(),cameraDriven=true,lastFrames=[];
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080d18);
+const camera=new THREE.PerspectiveCamera(48,1,.1,200);
+camera.position.set(0,4.5,11);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=true;
+ui.stage.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.enabled=false;controls.target.set(0,1.5,0);
+scene.add(new THREE.HemisphereLight(0xbfd2ff,0x21180f,2));
+const sun=new THREE.DirectionalLight(0xffefd1,3.5);sun.position.set(8,13,7);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(34,22),new THREE.MeshStandardMaterial({color:0x182131}));
+floor.rotation.x=-Math.PI/2;scene.add(floor);
+const world=new THREE.Group();scene.add(world);
+const loader=new GLTFLoader();
+
+function log(t){ui.logs.textContent+=`\n${t}`;ui.logs.scrollTop=ui.logs.scrollHeight}
+function status(t,c=''){ui.status.textContent=t;ui.status.className='status '+c}
+function clamp(n,a,b,f=0){n=Number(n);return Number.isFinite(n)?Math.max(a,Math.min(b,n)):f}
+function smooth(t){t=clamp(t,0,1);return t*t*(3-2*t)}
+function lerp3(a,b,t){return a.map((v,i)=>THREE.MathUtils.lerp(v,b[i],t))}
+function normAngle(a){while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;return a}
+function angleDelta(a,b){return normAngle(b-a)}
+function lerpAngle(a,b,t){return normAngle(a+angleDelta(a,b)*t)}
+function yawTo(from,to,type){const dx=to[0]-from[0],dz=to[2]-from[2];if(Math.hypot(dx,dz)<1e-5)return null;return normAngle(Math.atan2(dx,dz)+(MODEL_FORWARD_OFFSET[type]||0))}
+function forwardFromYaw(yaw,type){const a=yaw-(MODEL_FORWARD_OFFSET[type]||0);return [Math.sin(a),Math.cos(a)]}
+function unit2(x,z){const l=Math.hypot(x,z);return l<1e-6?[0,0]:[x/l,z/l]}
+function dot2(a,b){return a[0]*b[0]+a[1]*b[1]}
+function actionClip(type,a){if(type==='fox')return a==='run'?'Run':a==='walk'?'Walk':'Survey';return ({walk:'Walking',run:'Running',wave:'Wave',dance:'Dance',react:'No',jump:'Jump',idle:'Idle',pause:'Idle'})[a]||'Idle'}
+
+async function preload(){
+  for(const [k,m] of Object.entries(CATALOG)){
+    try{const g=await loader.loadAsync(m.file);templates[k]={scene:g.scene,animations:g.animations}}
+    catch(e){console.error(e);log(`资产 ${k} 加载失败，使用 fallback`)}
+  }
+  status('本地资产已加载','good');
+}
+function fallback(){
+  const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0x7895ff});
+  const b=new THREE.Mesh(new THREE.BoxGeometry(1,1.4,.65),m);b.position.y=1;g.add(b);
+  const h=new THREE.Mesh(new THREE.SphereGeometry(.45),m);h.position.y=2;g.add(h);
+  return {scene:g,animations:[]};
+}
+function clearWorld(){actors.clear();while(world.children.length)world.remove(world.children[0])}
+function createActor(spec){
+  const tpl=templates[spec.type]||fallback();
+  let model;try{model=SkeletonUtils.clone(tpl.scene)}catch{model=fallback().scene}
+  model.traverse(n=>{if(n.isMesh){n.visible=true;n.frustumCulled=false}});
+  model.scale.setScalar(spec.type==='fox'?.04:1);
+  const wrap=new THREE.Group(),visualPivot=new THREE.Group();visualPivot.add(model);wrap.add(visualPivot);world.add(wrap);
+  const mixer=new THREE.AnimationMixer(model),actions={};
+  for(const cl of tpl.animations||[])actions[cl.name]=mixer.clipAction(cl);
+  actors.set(spec.id,{spec,wrap,visualPivot,model,mixer,actions,currentClip:null});
+}
+function clipYawCorrection(type,clip){return Number(runtimeConfig?.clipYawCorrection?.[type]?.[clip]||0)}
+function setClip(a,name,t){
+  const n=(CATALOG[a.spec.type]?.clips||[]).find(x=>x.toLowerCase()===String(name).toLowerCase());
+  if(!n||!a.actions[n])return;
+  a.visualPivot.rotation.y=clipYawCorrection(a.spec.type,n);
+  if(a.currentClip!==n){a.mixer.stopAllAction();a.actions[n].reset().play();a.currentClip=n}
+  a.mixer.setTime(Math.max(0,t));
+}
+
+function validatePlanShape(raw){
+  const errors=[];
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return ['root must be an object'];
+  if(!Number.isFinite(Number(raw.duration)))errors.push('duration must be numeric');
+  if(!Array.isArray(raw.assets)||raw.assets.length<1)errors.push('assets must be a non-empty array');
+  if(!Array.isArray(raw.shots)||raw.shots.length<1)errors.push('shots must be a non-empty array');
+  const ids=new Set();
+  if(Array.isArray(raw.assets))for(const [i,a] of raw.assets.entries()){
+    if(!a||typeof a!=='object'){errors.push(`assets[${i}] must be object`);continue}
+    if(!a.id)errors.push(`assets[${i}].id missing`);
+    else if(ids.has(String(a.id)))errors.push(`duplicate asset id: ${a.id}`);
+    else ids.add(String(a.id));
+    if(a.type&&!['robot','fox'].includes(a.type))errors.push(`assets[${i}].type unsupported`);
+    if(!Array.isArray(a.position)||a.position.length!==3)errors.push(`assets[${i}].position must be [x,y,z]`);
+  }
+  if(Array.isArray(raw.shots))for(const [i,s] of raw.shots.entries()){
+    if(!s||typeof s!=='object'){errors.push(`shots[${i}] must be object`);continue}
+    if(!Number.isFinite(Number(s.start))||!Number.isFinite(Number(s.end)))errors.push(`shots[${i}] start/end invalid`);
+    if(s.cameraPreset&&!Object.keys(CAM).includes(s.cameraPreset))errors.push(`shots[${i}].cameraPreset unsupported`);
+    if(!Array.isArray(s.beats))errors.push(`shots[${i}].beats must be array`);
+    if(Array.isArray(s.beats))for(const [j,b] of s.beats.entries()){
+      if(!b?.target||!ids.has(String(b.target)))errors.push(`shots[${i}].beats[${j}] target invalid`);
+      if(!ACTIONS.includes(b?.action))errors.push(`shots[${i}].beats[${j}] action invalid`);
+      if(b?.faceTarget!=null&&!ids.has(String(b.faceTarget)))errors.push(`shots[${i}].beats[${j}] faceTarget invalid`);
+      if(!Number.isFinite(Number(b?.start))||!Number.isFinite(Number(b?.end)))errors.push(`shots[${i}].beats[${j}] time invalid`);
+    }
+  }
+  return errors;
+}
+function parseJsonLoose(text){
+  const attempts=[];
+  const raw=String(text||'').trim();
+  attempts.push(raw);
+  const unfenced=raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+  if(unfenced!==raw)attempts.push(unfenced);
+  const first=raw.indexOf('{'),last=raw.lastIndexOf('}');
+  if(first>=0&&last>first)attempts.push(raw.slice(first,last+1));
+  let lastError=null;
+  for(const a of attempts){try{return {value:JSON.parse(a),source:a}}catch(e){lastError=e}}
+  throw new Error(`JSON parse failed: ${lastError?.message||'invalid JSON'}`);
+}
+function isObject(x){return !!x&&typeof x==='object'&&!Array.isArray(x)}
+function planScore(x){if(!isObject(x))return -1;let s=0;if(Array.isArray(x.assets))s+=x.assets.length?7:2;if(Array.isArray(x.shots))s+=x.shots.length?7:2;if(Number.isFinite(Number(x.duration)))s+=2;if(typeof x.title==='string')s+=1;if(typeof x.summary==='string')s+=1;return s}
+function unwrapPlanCandidate(root){
+  if(!isObject(root))return root;
+  const keys=['plan','directorPlan','director_plan','repairedPlan','repaired_plan','repair','result','data','output','json','animation','project'];
+  let best=root,bestScore=planScore(root),queue=[{value:root,depth:0}],seen=new Set();
+  while(queue.length){const {value,depth}=queue.shift();if(!isObject(value)||seen.has(value)||depth>5)continue;seen.add(value);const sc=planScore(value);if(sc>bestScore){best=value;bestScore=sc}for(const k of keys){if(isObject(value[k]))queue.unshift({value:value[k],depth:depth+1})}for(const v of Object.values(value)){if(isObject(v))queue.push({value:v,depth:depth+1})}}
+  if(best!==root){const merged={...best};for(const k of ['assistant_message','review_summary','issues'])if(merged[k]==null&&root[k]!=null)merged[k]=root[k];return merged}
+  return root;
+}
+function completeFromBase(raw,base){
+  if(!isObject(raw))raw={};if(!base)return {value:raw,filled:[]};
+  const out={...raw},filled=[];
+  if(!Array.isArray(out.assets)||out.assets.length===0){out.assets=structuredClone(base.assets);filled.push('assets')}
+  if(!Array.isArray(out.shots)||out.shots.length===0){out.shots=structuredClone(base.shots);filled.push('shots')}
+  if(!Number.isFinite(Number(out.duration))){out.duration=base.duration;filled.push('duration')}
+  if(typeof out.title!=='string'||!out.title.trim()){out.title=base.title;filled.push('title')}
+  if(typeof out.summary!=='string'){out.summary=base.summary||'';filled.push('summary')}
+  return {value:out,filled};
+}
+function sanitize(raw){
+  const duration=clamp(raw?.duration,6,40,14),limit=Number(ui.limit.value);
+  const assets=(Array.isArray(raw?.assets)?raw.assets:[]).slice(0,limit).map((a,i)=>({
+    id:String(a.id||`a${i}`).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,40),
+    label:String(a.label||`角色${i+1}`).slice(0,40),
+    type:['robot','fox'].includes(a.type)?a.type:'robot',
+    color:String(a.color||'#7895ff'),
+    position:[clamp(a.position?.[0],-8,8,i*3-2),0,clamp(a.position?.[2],-4,4,0)],
+    rotationY:clamp(a.rotationY,-6.3,6.3,0)
+  }));
+  if(!assets.length)assets.push({id:'robot',label:'机器人',type:'robot',color:'#7895ff',position:[0,0,0],rotationY:0});
+  const ids=new Set(assets.map(a=>a.id));
+  const shots=(Array.isArray(raw?.shots)?raw.shots:[]).slice(0,8).map((s,i)=>({
+    id:String(s.id||`s${i}`),
+    title:String(s.title||`Shot ${i+1}`).slice(0,60),
+    caption:String(s.caption||'').slice(0,140),
+    start:clamp(s.start,0,duration,0),
+    end:clamp(s.end,0,duration,duration),
+    cameraPreset:Object.keys(CAM).includes(s.cameraPreset)?s.cameraPreset:'medium',
+    focus:(Array.isArray(s.focus)?s.focus:[]).filter(x=>ids.has(String(x))).map(String),
+    beats:(Array.isArray(s.beats)?s.beats:[]).filter(b=>ids.has(String(b.target))).slice(0,30).map(b=>({
+      target:String(b.target),
+      action:ACTIONS.includes(b.action)?b.action:'idle',
+      start:clamp(b.start,0,duration,0),
+      end:clamp(b.end,0,duration,duration),
+      to:Array.isArray(b.to)&&b.to.length===3?[clamp(b.to[0],-10,10),0,clamp(b.to[2],-5,5)]:null,
+      faceTarget:b.faceTarget!=null&&ids.has(String(b.faceTarget))?String(b.faceTarget):null,
+      rotationY:b.rotationY!==null&&b.rotationY!==undefined&&Number.isFinite(Number(b.rotationY))?clamp(b.rotationY,-6.3,6.3,0):null
+    }))
+  })).filter(s=>s.end>s.start);
+  if(!shots.length)shots.push({id:'s1',title:'Main',caption:'',start:0,end:duration,cameraPreset:'wide',focus:assets.map(a=>a.id),beats:[]});
+  return {title:String(raw?.title||'Animation').slice(0,100),summary:String(raw?.summary||'').slice(0,700),duration,assets,shots};
+}
+function compile(){
+  const curs=new Map(plan.assets.map(a=>[a.id,{pos:[...a.position],rot:a.rotationY}])),actions=[];
+  const orderedShots=[...plan.shots].sort((a,b)=>a.start-b.start);
+  for(const shot of orderedShots){
+    let interactionFaced=false;
+    const beats=[...shot.beats].sort((a,b)=>a.start-b.start);
+    for(const b of beats){
+      const spec=plan.assets.find(x=>x.id===b.target),st=curs.get(b.target);if(!spec||!st)continue;
+      if(['walk','run'].includes(b.action)){
+        const to=b.to||[st.pos[0]+2,0,st.pos[2]],autoYaw=yawTo(st.pos,to,spec.type);
+        if(autoYaw!==null){const turnEnd=Math.min(b.end,b.start+.16);actions.push({target:b.target,type:'rotate',start:b.start,end:turnEnd,from:st.rot,to:autoYaw,reason:'auto-face movement'});st.rot=autoYaw}
+        actions.push({target:b.target,type:'move',start:b.start,end:b.end,from:[...st.pos],to:[...to],clip:actionClip(spec.type,b.action)});st.pos=[...to];
+      }else if(b.action==='face'){
+        let targetYaw=null;if(b.faceTarget&&curs.has(b.faceTarget))targetYaw=yawTo(st.pos,curs.get(b.faceTarget).pos,spec.type);else if(b.rotationY!==null)targetYaw=b.rotationY;
+        if(targetYaw!==null){actions.push({target:b.target,type:'rotate',start:b.start,end:Math.max(b.start+.01,b.end),from:st.rot,to:targetYaw,reason:b.faceTarget?`face ${b.faceTarget}`:'explicit yaw'});st.rot=targetYaw}
+      }else{
+        const expressive=['wave','dance','react','jump'].includes(b.action);
+        if(expressive&&!interactionFaced&&shot.focus.length===2){
+          const [idA,idB]=shot.focus,stA=curs.get(idA),stB=curs.get(idB),spA=plan.assets.find(x=>x.id===idA),spB=plan.assets.find(x=>x.id===idB);
+          if(stA&&stB&&spA&&spB){const yawA=yawTo(stA.pos,stB.pos,spA.type),yawB=yawTo(stB.pos,stA.pos,spB.type),turnStart=Math.max(shot.start,b.start-.18);if(yawA!==null){actions.push({target:idA,type:'rotate',start:turnStart,end:b.start,from:stA.rot,to:yawA,reason:`auto-face ${idB}`});stA.rot=yawA}if(yawB!==null){actions.push({target:idB,type:'rotate',start:turnStart,end:b.start,from:stB.rot,to:yawB,reason:`auto-face ${idA}`});stB.rot=yawB}}
+          interactionFaced=true;
+        }
+        actions.push({target:b.target,type:'clip',start:b.start,end:b.end,clip:actionClip(spec.type,b.action)});
+      }
+    }
+  }
+  timeline={actions};
+}
+function stateAt(id,t){
+  const spec=plan.assets.find(a=>a.id===id);
+  let pos=[...spec.position],rot=spec.rotationY,clip=actionClip(spec.type,'idle'),clipStart=0;
+  for(const a of timeline.actions){
+    if(a.target!==id||t<a.start)continue;
+    if(a.type==='move'){
+      pos=t>=a.end?[...a.to]:lerp3(a.from,a.to,smooth((t-a.start)/Math.max(.001,a.end-a.start)));
+      clip=a.clip;clipStart=a.start;
+    }else if(a.type==='rotate')rot=t>=a.end?a.to:lerpAngle(a.from,a.to,smooth((t-a.start)/Math.max(.001,a.end-a.start)));
+    else if(a.type==='clip'&&t<=a.end){clip=a.clip;clipStart=a.start}
+  }
+  return {pos,rot,clip,clipTime:Math.max(0,t-clipStart)};
+}
+function shotAt(t){return plan.shots.find(s=>t>=s.start&&t<s.end)||plan.shots.at(-1)}
+function focusAt(t){
+  const sh=shotAt(t),ids=(sh?.focus?.length?sh.focus:plan.assets.map(a=>a.id));
+  const pts=ids.map(id=>stateAt(id,t).pos);
+  return pts.length?[pts.reduce((q,p)=>q+p[0],0)/pts.length,1.4,pts.reduce((q,p)=>q+p[2],0)/pts.length]:[0,1.4,0];
+}
+function apply(t){
+  for(const spec of plan.assets){
+    const a=actors.get(spec.id);if(!a)continue;const st=stateAt(spec.id,t);
+    a.wrap.position.fromArray(st.pos);a.wrap.rotation.y=st.rot;setClip(a,st.clip,st.clipTime);
+  }
+  const sh=shotAt(t);
+  if(sh){
+    const target=focusAt(t),off=CAM[sh.cameraPreset]||CAM.medium;
+    if(cameraDriven){camera.position.set(target[0]+off[0],off[1],target[2]+off[2]);camera.lookAt(...target)}
+    ui.shotBadge.textContent=`${sh.title} · ${sh.cameraPreset}`;ui.caption.textContent=sh.caption;
+  }
+  ui.time.textContent=`${t.toFixed(1)} / ${plan.duration.toFixed(1)}s`;ui.seek.value=String(t);
+}
+function renderPlan(){
+  compile();clearWorld();plan.assets.forEach(createActor);
+  ui.json.textContent=JSON.stringify(plan,null,2);
+  ui.story.innerHTML=`<b>${plan.title}</b><br><br>${plan.summary}<br><br>${plan.shots.map(s=>`<b>${s.title}</b> ${s.start.toFixed(1)}–${s.end.toFixed(1)}s<br>${s.caption}`).join('<br><br>')}`;
+  ui.assets.innerHTML=plan.assets.map(a=>`<div class="asset"><b>${a.label}</b><br>${a.type} · [${a.position.join(', ')}]</div>`).join('');
+  ui.seek.max=String(plan.duration);ui.shots.innerHTML='';
+  for(const s of plan.shots){const d=document.createElement('div');d.className='shot';d.style.left=`${100*s.start/plan.duration}%`;d.style.width=`${Math.max(2,100*(s.end-s.start)/plan.duration)}%`;d.textContent=s.title;ui.shots.appendChild(d)}
+  current=0;playing=false;apply(0);status('动画已编译 · RobotExpressive clip-facing calibration active','good');
+}
+
+const DIRECTOR_SYSTEM=`You are SceneForge Animate Director. Return one JSON object only. Use assets robot/fox; beats walk run wave dance react jump idle pause face; cameraPreset wide medium close reaction follow. Produce a readable 3-5 shot animation. Keep continuity and avoid teleporting. FACING RULES: the runtime automatically faces walk/run actors toward their movement vector, so do not guess rotationY for locomotion. Before interaction actions such as wave, dance, react or jump, use a face beat with faceTarget set to the other actor when they should look at each other. Prefer faceTarget over numeric rotationY. In two-character interaction shots, make facing intent explicit. Output {assistant_message,title,summary,duration,assets:[{id,label,type,color,position:[x,0,z],rotationY}],shots:[{id,title,caption,start,end,cameraPreset,focus:[ids],beats:[{target,action,start,end,to?,faceTarget?,rotationY?}]}]}.`;
+const JSON_REPAIR_SYSTEM=`You repair malformed or structurally incomplete JSON for SceneForge Animate. Return exactly one valid ROOT JSON object and no markdown. Preserve the intended animation content. Required root fields: title, summary, duration, assets, shots. assets and shots MUST be non-empty arrays. The animation plan itself must be the root object; never wrap it inside plan, repair, result, data, output, project or animation. Do not explain.`;
+
+async function stream(body){
+  const key=ui.key.value.trim();if(!key)throw new Error('请先输入 API Key');
+  body.stream=true;
+  const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(`DeepSeek ${r.status}: ${(await r.text()).slice(0,500)}`);
+  const reader=r.body.getReader(),dec=new TextDecoder();let buf='',content='';
+  ui.thinking.textContent='';
+  while(true){
+    const {done,value}=await reader.read();if(done)break;
+    buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+    for(const raw of lines){
+      const line=raw.trim();if(!line.startsWith('data:'))continue;
+      const p=line.slice(5).trim();if(!p||p==='[DONE]')continue;
+      let j;try{j=JSON.parse(p)}catch{continue}
+      const d=j.choices?.[0]?.delta||{};
+      if(d.reasoning_content){ui.thinking.textContent+=d.reasoning_content;ui.thinking.scrollTop=ui.thinking.scrollHeight}
+      if(d.content)content+=d.content;
+    }
+  }
+  return content;
+}
+async function repairMalformedJson(text,why,basePlan=null){
+  log(`JSON 校验失败，启动自动 JSON 修复：${why}`);
+  const reference=basePlan?`\nREFERENCE CURRENT PLAN (copy unchanged sections such as assets/shots if the attempted repair omitted them):\n${JSON.stringify(basePlan)}`:'';
+  const content=await stream({
+    model:'deepseek-flash',
+    messages:[{role:'system',content:JSON_REPAIR_SYSTEM+` The output MUST contain non-empty assets and shots arrays at the ROOT. Never wrap the plan inside repair/result/data/plan. If a reference current plan is provided, preserve every unchanged section from it.`},{role:'user',content:`Validation problem: ${why}\nMalformed output:\n${text}${reference}`}],
+    response_format:{type:'json_object'},thinking:{type:'disabled'},max_tokens:9000
+  });
+  return parseJsonLoose(content).value;
+}
+async function parseValidateOrRepair(content,label,basePlan=null){
+  let raw=null,errors=[],filled=[];
+  try{
+    raw=unwrapPlanCandidate(parseJsonLoose(content).value);
+    const completed=completeFromBase(raw,basePlan);raw=completed.value;filled=completed.filled;
+    errors=validatePlanShape(raw);
+  }catch(e){errors=[e.message]}
+  if(errors.length){
+    ui.validation.className='validation warn';ui.validation.textContent=`${label} 首次 JSON 无效：${errors.join('；')}。正在自动修复…`;
+    let repaired=await repairMalformedJson(content,errors.join('; '),basePlan);
+    repaired=unwrapPlanCandidate(repaired);
+    const completed=completeFromBase(repaired,basePlan);raw=completed.value;filled=[...new Set([...filled,...completed.filled])];
+    const errors2=validatePlanShape(raw);
+    if(errors2.length){
+      if(basePlan){
+        const deterministic=completeFromBase(raw,basePlan);raw=deterministic.value;filled=[...new Set([...filled,...deterministic.filled])];
+        const errors3=validatePlanShape(raw);
+        if(errors3.length)throw new Error(`自动 JSON 修复后仍不合法：${errors3.join('；')}`);
+      }else throw new Error(`自动 JSON 修复后仍不合法：${errors2.join('；')}`);
+    }
+    ui.validation.className='validation good';ui.validation.textContent=`${label}：JSON 修复并通过结构校验${filled.length?`；从当前动画补齐：${filled.join(', ')}`:''}。`;
+  }else{
+    ui.validation.className='validation good';ui.validation.textContent=`${label}：JSON.parse + 结构校验通过${filled.length?`；从当前动画补齐：${filled.join(', ')}`:''}。`;
+  }
+  return raw;
+}
+async function generate(){
+  ui.generate.disabled=true;
+  try{
+    const key=ui.key.value.trim();if(key)sessionStorage.setItem('deepseek_api_key',key);
+    status('Director Agent 正在流式生成…','warn');
+    const context={maxAssets:Number(ui.limit.value),currentPlan:plan,history};
+    const content=await stream({
+      model:'deepseek-flash',
+      messages:[{role:'system',content:DIRECTOR_SYSTEM},{role:'user',content:`Context:\n${JSON.stringify(context)}\nRequest:\n${ui.prompt.value}`}],
+      response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:8000
+    });
+    const raw=await parseValidateOrRepair(content,'Director 输出');
+    plan=sanitize(raw);history.push({user:ui.prompt.value,plan});renderPlan();log(raw.assistant_message||'Director 完成');
+    if(ui.autoReview.checked)await selfReview();
+  }catch(e){console.error(e);status(e.message,'bad');log(e.message)}
+  finally{ui.generate.disabled=false}
+}
+
+function activeMoveAt(id,t){return timeline.actions.find(a=>a.target===id&&a.type==='move'&&t>=a.start&&t<=a.end)||null}
+function orientationDiagnostics(t){const sh=shotAt(t),rows=[];for(const spec of plan.assets){const st=stateAt(spec.id,t),forward=forwardFromYaw(st.rot,spec.type),move=activeMoveAt(spec.id,t);let moveDirection=null,moveFacingDot=null,interactionTarget=null,interactionFacingDot=null;if(move){moveDirection=unit2(move.to[0]-move.from[0],move.to[2]-move.from[2]);moveFacingDot=Number(dot2(forward,moveDirection).toFixed(3))}if(sh?.focus?.length===2&&sh.focus.includes(spec.id)){interactionTarget=sh.focus.find(x=>x!==spec.id)||null;if(interactionTarget){const other=stateAt(interactionTarget,t).pos,dir=unit2(other[0]-st.pos[0],other[2]-st.pos[2]);interactionFacingDot=Number(dot2(forward,dir).toFixed(3))}}rows.push({id:spec.id,label:spec.label,rotationY:Number(st.rot.toFixed(3)),forwardXZ:forward.map(x=>Number(x.toFixed(3))),moveDirectionXZ:moveDirection,moveFacingDot,interactionTarget,interactionFacingDot})}return rows}
+function orientationWarnings(diags){const out=[];for(const d of diags){if(d.moveFacingDot!=null&&d.moveFacingDot<0.5)out.push(`${d.id} moving while facing wrong direction (dot=${d.moveFacingDot})`);if(d.interactionFacingDot!=null&&d.interactionFacingDot<0&&d.moveFacingDot==null)out.push(`${d.id} faces away from ${d.interactionTarget} during interaction (dot=${d.interactionFacingDot})`)}return out}
+function setFeedbackTab(mode){
+  const feedback=mode==='feedback';ui.qaTab.classList.toggle('active',!feedback);ui.feedbackTab.classList.toggle('active',feedback);ui.qaPanel.classList.toggle('active',!feedback);ui.feedbackPanel.classList.toggle('active',feedback);ui.feedbackMode.textContent=feedback?'文本反馈':'多视角';
+}
+function normalizeRuntimePatch(raw){
+  if(!raw||typeof raw!=='object')return null;const src=raw.runtime_patch||raw.runtimePatch||raw.runtime||null;if(!src||typeof src!=='object')return null;
+  const patch={clipYawCorrection:{}};let changed=false;
+  const table=src.clipYawCorrection||src.clip_yaw_correction||{};
+  for(const type of ['robot','fox']){if(!table[type]||typeof table[type]!=='object')continue;for(const [clip,val] of Object.entries(table[type])){if(!(CATALOG[type]?.clips||[]).includes(clip))continue;const n=Number(val);if(!Number.isFinite(n))continue;if(!patch.clipYawCorrection[type])patch.clipYawCorrection[type]={};patch.clipYawCorrection[type][clip]=normAngle(n);changed=true}}
+  return changed?patch:null;
+}
+function applyRuntimePatch(patch){if(!patch)return;for(const [type,clips] of Object.entries(patch.clipYawCorrection||{})){if(!runtimeConfig.clipYawCorrection[type])runtimeConfig.clipYawCorrection[type]={};for(const [clip,yaw] of Object.entries(clips))runtimeConfig.clipYawCorrection[type][clip]=yaw}log('已应用 runtime facing calibration：'+JSON.stringify(patch.clipYawCorrection));}
+function formatIssues(xs){if(!Array.isArray(xs)||!xs.length)return'';return xs.map(x=>typeof x==='string'?x:(x?.detail||x?.message||x?.note||JSON.stringify(x))).join('；')}
+function fullContextSnapshot(){
+  const sh=plan?shotAt(current):null;
+  return {
+    contextVersion:'phase-1.5.1-full',
+    userFeedbackMode:'text',
+    maxAssets:Number(ui.limit.value),
+    currentTime:Number(current.toFixed(3)),
+    currentShot:sh?structuredClone(sh):null,
+    currentPlan:plan?structuredClone(plan):null,
+    pendingRepair:pendingRepair?structuredClone(pendingRepair):null,
+    compiledTimeline:structuredClone(timeline),
+    currentOrientationDiagnostics:plan?orientationDiagnostics(current):[],
+    runtime:{catalog:CATALOG,cameraPresets:CAM,actions:ACTIONS,modelForwardOffset:MODEL_FORWARD_OFFSET,runtimeConfig:structuredClone(runtimeConfig),autoFacingRules:{walkRun:'runtime faces movement direction',interaction:'prefer faceTarget',numericRotationY:'avoid unless necessary'},visualCalibrationRule:'clipYawCorrection is applied on a child visualPivot after logical world yaw. Use runtime_patch for clip/model facing bugs.'},
+    agentHistory:structuredClone(history),
+    latestVisualQA:lastFrames.map(f=>({time:f.time,view:f.view,title:f.title,caption:f.caption,orientation:f.orientation||null,warnings:f.warnings||[]}))
+  };
+}
+const USER_TEXT_REVIEW_SYSTEM=`You are the SceneForge Animate revision agent. The user provides TEXT feedback about the current generated animation. You are given the COMPLETE project context: full agent history, current Director Plan, compiled runtime timeline, current playback state, supported assets/actions/cameras, runtimeConfig, pending repair if any, and all metadata from the latest multi-view visual QA. If visual QA keyframes are attached, inspect all of them too. Treat the newest user feedback as authoritative while preserving unrelated intent and continuity. Return one COMPLETE corrected Director Plan JSON. IMPORTANT: distinguish PLAN bugs from RUNTIME VISUAL CALIBRATION bugs. walk/run logical yaw is enforced by runtime movement vectors, so if the user says a character is visually walking/running backward while moveFacingDot is already near +1, do NOT keep changing plan rotationY: that indicates the rendered GLB/clip visual forward disagrees with the mathematical forward. In that case also return runtime_patch.clipYawCorrection with per-model/per-clip yaw correction in radians. A 180-degree flip is 3.141592653589793. If Running is reported correct but Walking/Idle/interaction clips are reversed, preserve Running=0 and flip only the clips that are visually reversed. For interactions, prefer face beats with faceTarget. Include assistant_message, review_summary, issues, optional runtime_patch, title, summary, duration, assets, shots. Output JSON only.`;
+async function reviewUserText(){
+  if(!plan)return;const feedback=ui.feedbackText.value.trim();if(!feedback){status('请先输入文本反馈','warn');return}
+  ui.textReview.disabled=true;ui.applyRepair.disabled=true;pendingRepair=null;
+  try{
+    const context=fullContextSnapshot();
+    const parts=[{type:'text',text:`NEW USER FEEDBACK (highest priority):\n${feedback}\n\nCOMPLETE SCENEFORGE CONTEXT:\n${JSON.stringify(context)}\n\nReturn the complete revised Director Plan. Do not drop unchanged assets, shots, timing, or story details.`}];
+    for(const f of lastFrames){parts.push({type:'text',text:`Existing multi-view QA frame: t=${Number(f.time).toFixed(2)}s view=${f.view} shot=${f.title||''} warnings=${(f.warnings||[]).join('; ')}`});if(f.dataUrl)parts.push({type:'image_url',image_url:{url:f.dataUrl,detail:'low'}})}
+    status(`Revision Agent 正在读取完整上下文${lastFrames.length?` + ${lastFrames.length} 张已有 QA 帧`:''}…`,'warn');
+    const content=await stream({model:'deepseek-flash',messages:[{role:'system',content:USER_TEXT_REVIEW_SYSTEM},{role:'user',content:parts}],response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:12000});
+    const raw=await parseValidateOrRepair(content,'用户文本反馈 Repair 输出',plan);pendingRepair=sanitize(raw);pendingRuntimePatch=normalizeRuntimePatch(raw);
+    history.push({event:'user_text_feedback',feedback,contextSnapshot:context,proposedPlan:structuredClone(pendingRepair),runtimePatch:pendingRuntimePatch?structuredClone(pendingRuntimePatch):null,reviewSummary:raw.review_summary||'',issues:Array.isArray(raw.issues)?raw.issues:[]});
+    ui.reviewSummary.textContent=(raw.review_summary||'文本反馈修订完成')+(Array.isArray(raw.issues)&&raw.issues.length?'\n问题：'+formatIssues(raw.issues):'')+(pendingRuntimePatch?'\n包含 runtime facing calibration。':'');ui.repairJson.textContent=JSON.stringify({...pendingRepair,...(pendingRuntimePatch?{runtime_patch:pendingRuntimePatch}:{})},null,2);ui.applyRepair.disabled=false;ui.feedbackMode.textContent='文本反馈';status('文本反馈 Repair 已校验，可应用 Plan + Runtime 修复','good');
+  }catch(e){console.error(e);status(e.message,'bad');log(e.message);ui.validation.className='validation bad';ui.validation.textContent=`文本反馈修复失败：${e.message}`}
+  finally{ui.textReview.disabled=false}
+}
+function candidateTimes(){
+  const fps=clamp(ui.sampleFps.value,.25,2,1),step=1/fps,times=[];
+  for(let t=0;t<plan.duration;t+=step)times.push(Math.min(plan.duration-.03,Math.max(.03,t+.02)));
+  if(times.at(-1)<plan.duration-.2)times.push(plan.duration-.03);
+  const maxImages=clamp(ui.maxImages.value,9,90,45),maxTimes=Math.max(3,Math.floor(maxImages/3));
+  if(times.length<=maxTimes)return times;
+  const picked=[];
+  for(let i=0;i<maxTimes;i++){const idx=Math.round(i*(times.length-1)/(maxTimes-1));picked.push(times[idx])}
+  return [...new Set(picked)];
+}
+function setCameraView(view,t){
+  const target=focusAt(t);
+  if(view==='director'){
+    const sh=shotAt(t),off=CAM[sh?.cameraPreset]||CAM.medium;
+    camera.position.set(target[0]+off[0],off[1],target[2]+off[2]);
+  }else if(view==='left')camera.position.set(target[0]-9,3.6,target[2]);
+  else camera.position.set(target[0]+9,3.6,target[2]);
+  camera.lookAt(...target);
+}
+async function capture(){
+  const old=current,was=playing,oldDriven=cameraDriven,oldPos=camera.position.clone(),oldQuat=camera.quaternion.clone();
+  playing=false;cameraDriven=false;ui.keyframes.innerHTML='';
+  const times=candidateTimes(),frames=[],views=['director','left','right'];let orientationWarningCount=0;
+  ui.sampleInfo.textContent=`${times.length} 个时间点 × 3 视角 = ${times.length*3} 张图。正在截取…`;
+  for(const t of times){
+    apply(t);
+    const sh=shotAt(t),orientation=orientationDiagnostics(t),ow=orientationWarnings(orientation);orientationWarningCount+=ow.length;
+    for(const view of views){
+      setCameraView(view,t);renderer.render(scene,camera);await new Promise(requestAnimationFrame);renderer.render(scene,camera);
+      const dataUrl=renderer.domElement.toDataURL('image/jpeg',.62);
+      const frame={time:t,view,title:sh?.title||'',caption:sh?.caption||'',orientation,warnings:ow,dataUrl};frames.push(frame);
+      const d=document.createElement('div');d.className='kf';d.innerHTML=`<img src="${dataUrl}" alt="${view}"><div>${t.toFixed(2)}s · ${view}<br>${sh?.title||''}</div>`;ui.keyframes.appendChild(d);
+    }
+  }
+  current=old;cameraDriven=oldDriven;camera.position.copy(oldPos);camera.quaternion.copy(oldQuat);apply(old);renderer.render(scene,camera);playing=was;lastFrames=frames;
+  ui.sampleInfo.className=orientationWarningCount?'validation warn':'validation good';ui.sampleInfo.textContent=`已截取 ${frames.length} 张：${times.length} 个时间点 × 3 视角。程序化朝向 QA 发现 ${orientationWarningCount} 条可疑项。`;
+  return frames;
+}
+
+const REVIEW_SYSTEM=`You are the visual QA and repair agent for SceneForge Animate. You receive dense time samples of a Three.js animation. Every sample time has director/left/right images plus structured orientation metadata. FACING IS A FIRST-CLASS QA CHECK. A moving actor should face its movement direction; moveFacingDot below 0.5 is suspicious and below 0 is clearly wrong. In two-character interaction shots (wave, react, dance, conversation-like beats), actors should normally face each other unless the story intentionally says otherwise; a negative interactionFacingDot means the actor is facing away. Check images AND the numeric metadata. Repair facing with face beats using faceTarget rather than guessing numeric rotationY. Also diagnose story readability, actor visibility, framing, overlaps/collisions, continuity, action timing and camera focus. Return one COMPLETE corrected Director Plan JSON, not a patch. Preserve the user's story and supported schema. Include assistant_message, review_summary and issues, plus title, summary, duration, assets, shots. Output JSON only.`;
+
+async function selfReview(){
+  if(!plan)return;ui.feedbackMode.textContent='多视角';
+  ui.review.disabled=true;ui.applyRepair.disabled=true;pendingRepair=null;
+  try{
+    status('正在进行密集三视角截帧…','warn');
+    const frames=await capture();
+    const parts=[{type:'text',text:`Current plan:\n${JSON.stringify(plan)}\nThere are ${frames.length} images. Each time sample has director/left/right views. Review the full temporal sequence and return a repaired complete plan JSON.`}];
+    for(const f of frames){
+      const orientationText=f.view==='director'?`\nOrientation metadata: ${JSON.stringify(f.orientation)}${f.warnings?.length?`\nOrientation warnings: ${f.warnings.join('; ')}`:''}`:'';
+      parts.push({type:'text',text:`t=${f.time.toFixed(2)}s view=${f.view} shot=${f.title} intended=${f.caption}${orientationText}`});
+      parts.push({type:'image_url',image_url:{url:f.dataUrl,detail:'low'}});
+    }
+    status(`Vision Agent 正在复审 ${frames.length} 张图…`,'warn');
+    const content=await stream({
+      model:'deepseek-flash',
+      messages:[{role:'system',content:REVIEW_SYSTEM},{role:'user',content:parts}],
+      response_format:{type:'json_object'},thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:10000
+    });
+    const raw=await parseValidateOrRepair(content,'Vision Repair 输出',plan);
+    pendingRepair=sanitize(raw);
+    history.push({event:'multiview_visual_review',reviewSummary:raw.review_summary||'',issues:Array.isArray(raw.issues)?raw.issues:[],proposedPlan:structuredClone(pendingRepair),frames:lastFrames.map(f=>({time:f.time,view:f.view,title:f.title,caption:f.caption,orientation:f.orientation||null,warnings:f.warnings||[]}))});
+    ui.reviewSummary.textContent=(raw.review_summary||'复审完成')+(Array.isArray(raw.issues)&&raw.issues.length?'\n问题：'+formatIssues(raw.issues):'');
+    ui.repairJson.textContent=JSON.stringify(pendingRepair,null,2);
+    ui.applyRepair.disabled=false;status('Repair JSON 已通过校验，可应用','good');
+  }catch(e){console.error(e);status(e.message,'bad');log(e.message);ui.validation.className='validation bad';ui.validation.textContent=`修复失败：${e.message}`}
+  finally{ui.review.disabled=false}
+}
+
+const DEMO={
+  title:'机器人舞台偶遇',summary:'碰面、挥手、突然跳舞、一起跑掉。',duration:14,
+  assets:[
+    {id:'blue',label:'蓝色机器人',type:'robot',color:'#4da3ff',position:[-4,0,0],rotationY:-1.57},
+    {id:'purple',label:'紫色机器人',type:'robot',color:'#c879ff',position:[4,0,0],rotationY:1.57}
+  ],
+  shots:[
+    {id:'s1',title:'碰面',caption:'两位机器人走到中央',start:0,end:4,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'walk',start:.4,end:3,to:[-1.2,0,0]},{target:'purple',action:'walk',start:.4,end:3,to:[1.2,0,0]}]},
+    {id:'s2',title:'挥手',caption:'蓝色机器人挥手',start:4,end:7,cameraPreset:'close',focus:['blue'],beats:[{target:'blue',action:'face',start:4.25,end:4.45,faceTarget:'purple'},{target:'purple',action:'face',start:4.25,end:4.45,faceTarget:'blue'},{target:'blue',action:'wave',start:4.5,end:6.5}]},
+    {id:'s3',title:'跳舞',caption:'紫色机器人突然跳舞',start:7,end:10.2,cameraPreset:'reaction',focus:['purple','blue'],beats:[{target:'purple',action:'face',start:7.15,end:7.35,faceTarget:'blue'},{target:'blue',action:'face',start:7.15,end:7.35,faceTarget:'purple'},{target:'purple',action:'dance',start:7.4,end:10.1},{target:'blue',action:'react',start:8,end:9.5}]},
+    {id:'s4',title:'逃跑',caption:'两人一起跑掉',start:10.2,end:14,cameraPreset:'wide',focus:['blue','purple'],beats:[{target:'blue',action:'run',start:10.5,end:13.6,to:[8,0,0]},{target:'purple',action:'run',start:10.5,end:13.6,to:[10,0,0]}]}
+  ]
+};
+
+ui.qaTab.onclick=()=>setFeedbackTab('qa');
+ui.feedbackTab.onclick=()=>setFeedbackTab('feedback');
+ui.textReview.onclick=reviewUserText;
+ui.generate.onclick=generate;
+ui.review.onclick=selfReview;
+ui.applyRepair.onclick=()=>{
+  if(!pendingRepair)return;
+  const errs=validatePlanShape(pendingRepair);
+  if(errs.length){ui.validation.className='validation bad';ui.validation.textContent=`禁止应用：${errs.join('；')}`;return}
+  plan=pendingRepair;if(pendingRuntimePatch)applyRuntimePatch(pendingRuntimePatch);const appliedRuntime=pendingRuntimePatch?structuredClone(pendingRuntimePatch):null;pendingRepair=null;pendingRuntimePatch=null;ui.applyRepair.disabled=true;history.push({event:'repair_applied',plan:structuredClone(plan),runtimePatch:appliedRuntime});renderPlan();log('已应用通过校验的 Plan'+(appliedRuntime?' + Runtime facing calibration':''));
+};
+ui.demo.onclick=()=>{plan=sanitize(DEMO);pendingRepair=null;renderPlan();log('已加载清晰 Demo')};
+ui.clearContext.onclick=()=>{
+  history=[];pendingRepair=null;pendingRuntimePatch=null;lastFrames=[];ui.applyRepair.disabled=true;ui.thinking.textContent='上下文已清除，当前动画保留。';ui.reviewSummary.textContent='尚未复审。';ui.repairJson.textContent='{}';ui.validation.className='validation';ui.validation.textContent='上下文已清除。当前动画仍保留。';ui.keyframes.innerHTML='<div class="hint">上下文已清除；当前动画未删除。</div>';ui.feedbackText.value='';ui.sampleInfo.className='validation';ui.sampleInfo.textContent='尚未采样。';log('已清除 Agent 完整历史、文本反馈和复审缓存；当前动画保留。');
+};
+ui.clearKey.onclick=()=>{ui.key.value='';sessionStorage.removeItem('deepseek_api_key');log('API Key 已清除')};
+ui.play.onclick=()=>{playing=!playing;ui.play.textContent=playing?'⏸ 暂停':'▶ 播放'};
+ui.restart.onclick=()=>{current=0;playing=true;ui.play.textContent='⏸ 暂停';apply(0)};
+ui.orbit.onclick=()=>{cameraDriven=!cameraDriven;controls.enabled=!cameraDriven;ui.orbit.textContent=cameraDriven?'自由镜头':'跟随镜头'};
+ui.seek.oninput=()=>{current=Number(ui.seek.value);playing=false;ui.play.textContent='▶ 播放';apply(current)};
+
+function resize(){const w=ui.stage.clientWidth,h=ui.stage.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
+new ResizeObserver(resize).observe(ui.stage);resize();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(playing&&plan){current+=dt;if(current>=plan.duration)current=0;apply(current)}controls.update();renderer.render(scene,camera)}
+requestAnimationFrame(loop);
+await preload();plan=sanitize(DEMO);renderPlan();
+</script>
+</body>
+</html>
